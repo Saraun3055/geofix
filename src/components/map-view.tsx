@@ -1,0 +1,132 @@
+import { useMemo } from 'react'
+import { GoogleMap, Marker } from '@react-google-maps/api'
+import { MapPin, Wrench } from 'lucide-react'
+import { cn } from '@/lib/utils'
+
+const GMAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined
+
+export interface MapMarker {
+  id: string
+  lat: number
+  lng: number
+  label?: string
+  color?: string
+  kind?: 'request' | 'worker' | 'user'
+}
+
+const mapOptions = {
+  disableDefaultUI: false,
+  zoomControl: true,
+  mapTypeControl: false,
+  streetViewControl: false,
+  fullscreenControl: false,
+  styles: [
+    {
+      featureType: 'poi',
+      elementType: 'labels',
+      stylers: [{ visibility: 'off' }],
+    },
+  ],
+}
+
+export function MapView({
+  markers,
+  center,
+  zoom = 13,
+  height = 320,
+  className,
+}: {
+  markers: MapMarker[]
+  center: { lat: number; lng: number }
+  zoom?: number
+  height?: number
+  className?: string
+}) {
+  const hasKey = Boolean(GMAPS_KEY)
+
+  if (!hasKey) {
+    return <MockMap markers={markers} center={center} height={height} className={className} />
+  }
+
+  return (
+    <div className={cn('overflow-hidden rounded-xl border border-border', className)} style={{ height }}>
+      <GoogleMap
+        mapContainerStyle={{ width: '100%', height: '100%' }}
+        center={center}
+        zoom={zoom}
+        options={mapOptions}
+      >
+        {markers.map((m) => (
+          <Marker
+            key={m.id}
+            position={{ lat: m.lat, lng: m.lng }}
+            title={m.label}
+            icon={{
+              path: typeof window !== 'undefined' && (window as any).google?.maps?.SymbolPath?.CIRCLE,
+              fillColor: m.color ?? '#b7512e',
+              fillOpacity: 1,
+              strokeColor: '#fff',
+              strokeWeight: 2,
+              scale: 9,
+            }}
+          />
+        ))}
+      </GoogleMap>
+    </div>
+  )
+}
+
+/** Offline-friendly stylized map used when no Google Maps key is configured. */
+function MockMap({
+  markers,
+  center,
+  height,
+  className,
+}: {
+  markers: MapMarker[]
+  center: { lat: number; lng: number }
+  height?: number
+  className?: string
+}) {
+  const bounds = useMemo(() => {
+    const lats = markers.map((m) => m.lat)
+    const lngs = markers.map((m) => m.lng)
+    if (lats.length === 0) {
+      return { minLat: center.lat - 0.02, maxLat: center.lat + 0.02, minLng: center.lng - 0.02, maxLng: center.lng + 0.02 }
+    }
+    const minLat = Math.min(...lats, center.lat)
+    const maxLat = Math.max(...lats, center.lat)
+    const minLng = Math.min(...lngs, center.lng)
+    const maxLng = Math.max(...lngs, center.lng)
+    const pad = Math.max((maxLat - minLat) * 0.3, (maxLng - minLng) * 0.3, 0.01)
+    return { minLat: minLat - pad, maxLat: maxLat + pad, minLng: minLng - pad, maxLng: maxLng + pad }
+  }, [markers, center])
+
+  return (
+    <div
+      className={cn('geo-dots relative overflow-hidden rounded-xl border border-border bg-[#efe9dd]', className)}
+      style={{ height: height ?? 320 }}
+    >
+      <div className="absolute inset-0 opacity-60" style={{ background: 'linear-gradient(135deg,#ece5d6 0%,#f6f1e7 100%)' }} />
+      {markers.map((m) => {
+        const x = ((m.lng - bounds.minLng) / (bounds.maxLng - bounds.minLng)) * 100
+        const y = 100 - ((m.lat - bounds.minLat) / (bounds.maxLat - bounds.minLat)) * 100
+        const isWorker = m.kind === 'worker'
+        return (
+          <div key={m.id} className="absolute -translate-x-1/2 -translate-y-1/2" style={{ left: `${x}%`, top: `${y}%` }}>
+            <div
+              className="flex h-7 w-7 items-center justify-center rounded-full text-white shadow-lg ring-4 ring-white/70"
+              style={{ backgroundColor: m.color ?? (isWorker ? '#2f6f4f' : '#b7512e') }}
+            >
+              {isWorker ? <Wrench className="h-3.5 w-3.5" /> : <MapPin className="h-4 w-4" />}
+            </div>
+            {m.label && <div className="mt-1 rounded-md bg-white/90 px-1.5 py-0.5 text-center text-[10px] font-medium shadow-sm">{m.label}</div>}
+          </div>
+        )
+      })}
+      <div className="absolute bottom-2 right-2 rounded-md bg-white/70 px-2 py-1 text-[10px] text-muted-foreground">
+        {markers.length} live pin{markers.length === 1 ? '' : 's'}
+      </div>
+    </div>
+  )
+}

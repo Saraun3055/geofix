@@ -1,0 +1,225 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+/* ------------------------------------------------------------------ */
+/* GeoFix design tokens                                                 */
+/* Warm terracotta + amber brand. Distinct scopes per portal.          */
+/* ------------------------------------------------------------------ */
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --font-display: 'Sora Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Archivo Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, 'Cascadia Mono', monospace;
+
+  --radius-sm: calc(var(--radius) - 6px);
+  --radius-md: calc(var(--radius) - 3px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 6px);
+  --radius-2xl: calc(var(--radius) + 12px);
+}
+
+/* Default: Customer & shared surface (warm parchment) */
+:root {
+  --radius: 0.75rem;
+  --background: #faf6ef;
+  --foreground: #221a15;
+  --card: #fffdf8;
+  --card-foreground: #2a211b;
+  --popover: #fffdf8;
+  --popover-foreground: #2a211b;
+  --primary: #b7512e;
+  --primary-foreground: #fff7f2;
+  --secondary: #f2e9dc;
+  --secondary-foreground: #4a3a30;
+  --muted: #f1e9dd;
+  --muted-foreground: #7c6b5e;
+  --accent: #f2a23c;
+  --accent-foreground: #3a2508;
+  --destructive: #b3382c;
+  --destructive-foreground: #fff5f3;
+  --border: #e5dac8;
+  --input: #d9cbb6;
+  --ring: #b7512e;
+  --sidebar: #241b15;
+  --sidebar-foreground: #f0e7da;
+  --sidebar-primary: #d5774f;
+  --sidebar-primary-foreground: #241b15;
+  --sidebar-accent: #33271e;
+  --sidebar-accent-foreground: #f8efe2;
+  --sidebar-border: #3a2c21;
+  --sidebar-ring: #d5774f;
+}
+
+/* Worker portal: amber-flavored */
+.portal-worker {
+  --primary: #9a6a10;
+  --primary-foreground: #fffaf0;
+  --ring: #9a6a10;
+  --accent: #e8a33d;
+  --sidebar-primary: #e0a23c;
+  --sidebar-primary-foreground: #2b1d05;
+  --background: #f9f4e7;
+}
+
+/* Admin portal: neutral operations tool */
+.portal-admin {
+  --background: #f2eee8;
+  --foreground: #1d1a17;
+  --card: #fbf8f3;
+  --primary: #40332b;
+  --primary-foreground: #f5efe7;
+  --ring: #40332b;
+  --accent: #b08a4b;
+  --accent-foreground: #241c0e;
+  --muted: #e9e2d8;
+  --muted-foreground: #6b6157;
+  --border: #dcd2c4;
+  --input: #cec2b2;
+  --sidebar: #191512;
+  --sidebar-foreground: #efe6da;
+  --sidebar-primary: #c9a26b;
+  --sidebar-primary-foreground: #191512;
+  --sidebar-accent: #251f1a;
+  --sidebar-accent-foreground: #f3eadc;
+  --sidebar-border: #2c251e;
+  --sidebar-ring: #c9a26b;
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+    outline-color: color-mix(in oklab, var(--ring) 40%, transparent);
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    font-feature-settings: 'ss01' on;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
+  ::selection {
+    background-color: color-mix(in oklab, var(--primary) 22%, transparent);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Bespoke utilities / component classes                                */
+/* ------------------------------------------------------------------ */
+
+@layer components {
+  /* Monospace stat figures used across admin + worker dashboards */
+  .stat-number {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.03em;
+  }
+
+  /* Landing hero background: faint topographic / contour feel */
+  .geo-grid {
+    background-image:
+      linear-gradient(to right, color-mix(in oklab, var(--foreground) 6%, transparent) 1px, transparent 1px),
+      linear-gradient(to bottom, color-mix(in oklab, var(--foreground) 6%, transparent) 1px, transparent 1px);
+    background-size: 42px 42px;
+  }
+  .geo-dots {
+    background-image: radial-gradient(color-mix(in oklab, var(--foreground) 14%, transparent) 1px, transparent 1px);
+    background-size: 18px 18px;
+  }
+
+  /* Warm paper card used on portal pages */
+  .paper-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow:
+      0 1px 0 0 color-mix(in oklab, white 70%, transparent) inset,
+      0 10px 24px -18px rgb(40 25 12 / 0.35);
+  }
+
+  .paper-card-hover {
+    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+  }
+  .paper-card-hover:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in oklab, var(--primary) 35%, var(--border));
+    box-shadow:
+      0 1px 0 0 color-mix(in oklab, white 70%, transparent) inset,
+      0 18px 34px -20px rgb(40 25 12 / 0.4);
+  }
+
+  /* Radial "pin" used for map markers + connectors */
+  .pin-dot {
+    border-radius: 9999px;
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--primary) 18%, transparent);
+  }
+
+  /* Subtle top accent underline for section titles */
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted-foreground);
+  }
+}
+
+@layer utilities {
+  .animate-in {
+    animation: geofix-in 320ms cubic-bezier(0.21, 1.02, 0.73, 1) both;
+  }
+  .animate-list-in {
+    animation: geofix-in 380ms cubic-bezier(0.21, 1.02, 0.73, 1) both;
+  }
+}
+
+@keyframes geofix-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
