@@ -20,6 +20,8 @@ function portalFor(role: string) {
   return role === 'admin' ? '/admin' : role === 'worker' ? '/worker' : '/customer'
 }
 
+const EMAIL_RE = /^\S+@\S+\.\S+$/
+
 export default function LoginPage() {
   const navigate = useNavigate()
   const role = useAuthStore((s) => s.role)
@@ -27,9 +29,20 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [showPw, setShowPw] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>({})
+
+  function validateForm() {
+    const next: { email?: string; password?: string } = {}
+    if (!EMAIL_RE.test(email.trim())) next.email = 'Enter a valid email address'
+    if (password.length === 0) next.password = 'Password is required'
+    else if (password.length < 8) next.password = 'Password must be at least 8 characters'
+    setErrors(next)
+    return Object.keys(next).length === 0
+  }
 
   async function handleApiLogin(e: React.FormEvent) {
     e.preventDefault()
+    if (!validateForm()) return
     setBusy(true)
     try {
       const { accessToken, user } = await apiLogin(email, password)
@@ -50,6 +63,7 @@ export default function LoginPage() {
 
   function handleDemoEmail(e: React.FormEvent) {
     e.preventDefault()
+    if (!validateForm()) return
     const res = demoLoginEmail(email, password)
     if (!res.ok) {
       toastError('Login failed', res.message)
@@ -73,10 +87,30 @@ export default function LoginPage() {
             <div className="space-y-1.5">
               <Label htmlFor="api-email">Email</Label>
               <Input id="api-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="worker.demo@geofix.app" required />
+              {errors.email && <p className="text-xs font-medium text-destructive">{errors.email}</p>}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="api-pw">Password</Label>
-              <Input id="api-pw" type={showPw ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required />
+              <div className="relative">
+                <Input
+                  id="api-pw"
+                  type={showPw ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="pr-10"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPw((v) => !v)}
+                  aria-label={showPw ? 'Hide password' : 'Show password'}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground cursor-pointer"
+                >
+                  {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              {errors.password && <p className="text-xs font-medium text-destructive">{errors.password}</p>}
             </div>
             <Button type="submit" className="w-full" disabled={busy}>
               {busy ? 'Signing in…' : 'Sign in'}
@@ -127,13 +161,13 @@ export default function LoginPage() {
 
           <div className="space-y-2 border-t border-border pt-4">
             <p className="text-xs font-medium text-muted-foreground">Or sign in with credentials</p>
-            <form onSubmit={handleDemoEmail} className="flex gap-2">
+            <form onSubmit={handleDemoEmail} className="flex flex-wrap items-center gap-2">
               <Input
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Email"
                 type="email"
-                className="flex-1"
+                className="min-w-[120px] flex-1"
                 required
               />
               <Input
@@ -149,6 +183,12 @@ export default function LoginPage() {
                 {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </form>
+            {(errors.email || errors.password) && (
+              <div className="mt-2 space-y-1">
+                {errors.email && <p className="text-xs font-medium text-destructive">{errors.email}</p>}
+                {errors.password && <p className="text-xs font-medium text-destructive">{errors.password}</p>}
+              </div>
+            )}
           </div>
 
           <p className="text-center text-sm text-muted-foreground">

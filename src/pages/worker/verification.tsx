@@ -6,6 +6,7 @@ import {
   XCircle,
   Loader2,
   FileBadge,
+  Clock,
 } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkerProfile } from '@/hooks/use-workers'
@@ -25,7 +26,23 @@ export default function WorkerVerification() {
   const [preview, setPreview] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
-  const status = profile?.verificationStatus ?? 'pending'
+  const profileStatus = profile?.verificationStatus ?? 'pending'
+  const hasDoc = !!profile?.govIdUrl
+  const phase: 'pending' | 'in-progress' | 'approved' | 'rejected' =
+    profileStatus === 'approved'
+      ? 'approved'
+      : profileStatus === 'rejected'
+        ? 'rejected'
+        : hasDoc
+          ? 'in-progress'
+          : 'pending'
+
+  const PHASE_LABEL: Record<typeof phase, string> = {
+    pending: 'Pending',
+    'in-progress': 'In progress',
+    approved: 'Approved',
+    rejected: 'Rejected',
+  }
 
   function pickFile(f: File) {
     if (!f.type.startsWith('image/') && f.type !== 'application/pdf') {
@@ -70,34 +87,40 @@ export default function WorkerVerification() {
           <div
             className={cn(
               'flex items-center gap-4 rounded-xl border p-5',
-              status === 'approved'
+              phase === 'approved'
                 ? 'border-emerald-200 bg-emerald-50'
-                : status === 'rejected'
+                : phase === 'rejected'
                   ? 'border-rose-200 bg-rose-50'
                   : 'border-amber-200 bg-amber-50',
             )}
           >
-            {status === 'approved' ? (
+            {phase === 'approved' ? (
               <CheckCircle2 className="h-9 w-9 text-emerald-600" />
-            ) : status === 'rejected' ? (
+            ) : phase === 'rejected' ? (
               <XCircle className="h-9 w-9 text-rose-600" />
-            ) : (
+            ) : phase === 'in-progress' ? (
               <Loader2 className="h-9 w-9 animate-spin text-amber-600" />
+            ) : (
+              <Clock className="h-9 w-9 text-amber-600" />
             )}
             <div>
               <p className="font-display text-base font-semibold">
-                {status === 'approved'
+                {phase === 'approved'
                   ? 'You are verified'
-                  : status === 'rejected'
+                  : phase === 'rejected'
                     ? 'Verification rejected — resubmit'
-                    : 'Verification in review'}
+                    : phase === 'in-progress'
+                      ? 'Verification in progress'
+                      : 'Verification pending'}
               </p>
               <p className="text-sm text-muted-foreground">
-                {status === 'approved'
+                {phase === 'approved'
                   ? 'Your verified badge now shows on every worker list.'
-                  : status === 'rejected'
+                  : phase === 'rejected'
                     ? 'Upload a clearer copy of your government ID below.'
-                    : 'Your submission is being reviewed. You can upload a new copy any time.'}
+                    : phase === 'in-progress'
+                      ? 'Your submission is being reviewed. You can upload a new copy any time.'
+                      : 'Upload your government ID to start verification. Customers only see verified workers.'}
               </p>
             </div>
           </div>
@@ -169,8 +192,8 @@ export default function WorkerVerification() {
           </div>
 
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Badge variant={status === 'approved' ? 'success' : 'muted'}>
-              Current status: {status}
+            <Badge variant={phase === 'approved' ? 'success' : 'muted'}>
+              Current status: {PHASE_LABEL[phase]}
             </Badge>
           </div>
         </>

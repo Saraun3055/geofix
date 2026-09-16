@@ -7,6 +7,8 @@ import {
   type AuditLogDoc,
   type ServiceCategory,
   type GeoPointLike,
+  type JobUpdateDoc,
+  type RequestStatus,
   CATEGORY_LIST,
 } from './types'
 
@@ -127,6 +129,8 @@ function generateDemoData(): DemoStore {
     } else {
       worker = workers[(i - 10) % 6]! // completed
     }
+    const buildUpdates = (entries: [RequestStatus, number][]): JobUpdateDoc[] =>
+      entries.map(([status, minutes]) => ({ status, timestamp: isoAgo(minutes) }))
     return {
       id: `r${i}`,
       customerId: `c${i % NAMES_C.length}`,
@@ -137,10 +141,38 @@ function generateDemoData(): DemoStore {
       title: `${CATEGORIES[i % CATEGORIES.length]} repair needed`,
       description: `Issue with ${CATEGORIES[i % CATEGORIES.length]?.toLowerCase()} at my residence. Please call ahead.`,
       photoUrls: [],
-      status: i < 3 ? 'searching' : i < 5 ? 'pending_worker_response' : i < 10 ? 'accepted' : 'completed',
+      status:
+        i < 3
+          ? 'searching'
+          : i < 5
+            ? 'pending_worker_response'
+            : i === 6
+              ? 'on_the_way'
+              : i === 7
+                ? 'arrived'
+                : i === 8
+                  ? 'in_progress'
+                  : i < 10
+                    ? 'accepted'
+                    : 'completed',
       customerLocation: randomGeoPoint(),
       customerAddress: ADDR[i % ADDR.length],
       rejectedBy: [],
+      jobUpdates:
+        i < 5
+          ? []
+          : i < 10
+            ? buildUpdates([
+                ['accepted', 100 + i * 15],
+                ...(i >= 6 ? [['on_the_way', 85 + i * 15]] : []),
+                ...(i >= 7 ? [['arrived', 70 + i * 15]] : []),
+                ...(i >= 8 ? [['in_progress', 55 + i * 15]] : []),
+              ] as [RequestStatus, number][])
+            : buildUpdates([
+                ['accepted', 110 + i * 12],
+                ['in_progress', 80 + i * 12],
+                ['completed', 40 + i * 10],
+              ]),
       createdAt: createdAgo(i),
       acceptedAt: i >= 8 ? isoAgo(20 + i * 18) : undefined,
       completedAt: i >= 10 ? completedAgo(i) : undefined,

@@ -90,12 +90,16 @@ export function useActiveRequestsStats() {
     queryFn: async () => {
       if (isLocalApi) return getActiveStats()
       const store = getDemoStore()
-      const active = store.requests.filter((r) => ['searching', 'pending_worker_response', 'accepted'].includes(r.status))
+      const active = store.requests.filter((r) =>
+        ['searching', 'pending_worker_response', 'accepted', 'on_the_way', 'arrived', 'in_progress'].includes(r.status),
+      )
       return {
         total: active.length,
         searching: active.filter((r) => r.status === 'searching').length,
         pending: active.filter((r) => r.status === 'pending_worker_response').length,
-        accepted: active.filter((r) => r.status === 'accepted').length,
+        accepted: active.filter((r) =>
+          ['accepted', 'on_the_way', 'arrived', 'in_progress'].includes(r.status),
+        ).length,
       }
     },
     refetchInterval: isDemo || isLocalApi ? 3000 : 10000,

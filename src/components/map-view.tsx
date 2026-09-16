@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { GoogleMap, Marker } from '@react-google-maps/api'
-import { MapPin, Wrench } from 'lucide-react'
+import { MapPin } from 'lucide-react'
+import { CategoryIcon } from '@/components/category-icon'
 import { cn } from '@/lib/utils'
 
 const GMAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined
@@ -12,6 +13,7 @@ export interface MapMarker {
   label?: string
   color?: string
   kind?: 'request' | 'worker' | 'user'
+  category?: string
 }
 
 const mapOptions = {
@@ -118,7 +120,7 @@ function MockMap({
               className="flex h-7 w-7 items-center justify-center rounded-full text-white shadow-lg ring-4 ring-white/70"
               style={{ backgroundColor: m.color ?? (isWorker ? '#2f6f4f' : '#b7512e') }}
             >
-              {isWorker ? <Wrench className="h-3.5 w-3.5" /> : <MapPin className="h-4 w-4" />}
+              {isWorker ? <CategoryIcon category={m.category ?? ''} className="h-3.5 w-3.5" /> : <MapPin className="h-4 w-4" />}
             </div>
             {m.label && <div className="mt-1 rounded-md bg-white/90 px-1.5 py-0.5 text-center text-[10px] font-medium shadow-sm">{m.label}</div>}
           </div>

@@ -174,7 +174,7 @@ router.get('/stats/active', async (req: AuthRequest, res: Response) => {
         ServiceRequest.countDocuments(),
         ServiceRequest.countDocuments({ status: 'searching' }),
         ServiceRequest.countDocuments({ status: 'pending_worker_response' }),
-        ServiceRequest.countDocuments({ status: 'accepted' }),
+        ServiceRequest.countDocuments({ status: { $in: ['accepted', 'on_the_way', 'arrived', 'in_progress'] } }),
         Dispute.countDocuments({ status: 'open' }),
         VerificationQueue.countDocuments({ status: 'pending' }),
       ])

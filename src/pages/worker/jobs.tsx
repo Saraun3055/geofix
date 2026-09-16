@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { History, MapPin, Wrench, Receipt } from 'lucide-react'
+import { History, MapPin, Receipt } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkerJobs } from '@/hooks/use-requests'
 import { useRatingsForWorker } from '@/hooks/use-ratings'
@@ -11,6 +11,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog'
+import { JobProgressStepper } from '@/components/job-progress'
+import { CategoryIcon } from '@/components/category-icon'
 import { timeAgoShort } from '@/lib/utils'
 import { markCompleted } from '@/services/requests.service'
 import { useState } from 'react'
@@ -92,7 +94,7 @@ export default function WorkerJobs() {
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-primary">
-                      <Wrench className="h-4 w-4" />
+                      <CategoryIcon category={job.category} className="h-4 w-4" />
                     </span>
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold">{job.title}</p>
@@ -102,8 +104,10 @@ export default function WorkerJobs() {
                     </div>
                   </div>
                 </div>
-                <Badge variant={job.status === 'completed' ? 'success' : 'warning'}>
-                  {job.status === 'completed' ? 'Complete' : 'In progress'}
+                <Badge variant={job.status === 'completed' ? (job.paymentStatus === 'paid' ? 'success' : 'warning') : 'warning'}>
+                  {job.status === 'completed'
+                    ? (job.paymentStatus === 'paid' ? 'Complete' : 'Payment due')
+                    : 'In progress'}
                 </Badge>
               </div>
 
@@ -121,11 +125,15 @@ export default function WorkerJobs() {
                 </p>
               )}
 
+              {['accepted', 'on_the_way', 'arrived', 'in_progress'].includes(job.status) && (
+                <JobProgressStepper job={job} onCompleteClick={openBillDialog} />
+              )}
+
               <div className="mt-3 flex items-center justify-between border-t border-border/60 pt-3">
-                {job.status === 'accepted' ? (
+                {job.status === 'in_progress' ? (
                   <Dialog open={billJob?.id === job.id} onOpenChange={(open) => !open && setBillJob(null)}>
                     <DialogTrigger asChild>
-                      <Button size="sm" onClick={() => openBillDialog(job)}>Mark as complete</Button>
+                      <Button size="sm" onClick={() => openBillDialog(job)}>Complete & send bill</Button>
                     </DialogTrigger>
                     <DialogContent>
                       <DialogHeader>
@@ -189,7 +197,9 @@ export default function WorkerJobs() {
                   </Dialog>
                 ) : (
                   <p className="text-xs text-muted-foreground">
-                    Completed {timeAgoShort(job.completedAt ?? job.createdAt)} ago
+                    {job.paymentStatus === 'paid'
+                      ? <>Completed {timeAgoShort(job.completedAt ?? job.createdAt)} ago</>
+                      : <>Job done · awaiting customer payment</>}
                   </p>
                 )}
                 <div className="flex items-center gap-1.5 text-xs">

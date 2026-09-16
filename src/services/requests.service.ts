@@ -8,6 +8,8 @@ import type {
   ServiceRequestDoc,
   RatingDoc,
   GeoPointLike,
+  RequestStatus,
+  JobProgressStatus,
 } from '@/lib/types'
 
 function isoNow() {
@@ -79,6 +81,10 @@ export async function acceptRequest(requestId: string, workerId: string): Promis
   req.acceptedAt = isoNow()
   req.updatedAt = isoNow()
   req.chatChannelId = `${req.customerId}__${workerId}`
+  req.jobUpdates = [
+    ...(req.jobUpdates ?? []),
+    { status: 'accepted', timestamp: isoNow() },
+  ]
   const worker = store.workers.find((w) => w.userId === workerId)
   req.whatsappNumber = worker?.phone ?? req.whatsappNumber
   persistDemoStore(store)
@@ -100,6 +106,28 @@ export async function rejectRequest(requestId: string, workerId: string): Promis
   return true
 }
 
+const PROGRESS_ORDER: RequestStatus[] = ['accepted', 'on_the_way', 'arrived', 'in_progress']
+
+export async function updateJobProgress(
+  requestId: string,
+  status: JobProgressStatus,
+  note?: string,
+): Promise<boolean> {
+  if (isLocalApi) return localApi.updateJobProgressApi(requestId, status, note)
+
+  const store = getDemoStore()
+  const req = store.requests.find((r) => r.id === requestId)
+  if (!req) return false
+  const currentIdx = PROGRESS_ORDER.indexOf(req.status)
+  const nextIdx = PROGRESS_ORDER.indexOf(status)
+  if (currentIdx === -1 || nextIdx !== currentIdx + 1) return false
+  req.status = status
+  req.updatedAt = isoNow()
+  req.jobUpdates = [...(req.jobUpdates ?? []), { status, note: note?.trim() || undefined, timestamp: isoNow() }]
+  persistDemoStore(store)
+  return true
+}
+
 export async function markCompleted(
   requestId: string,
   workerId: string,
@@ -115,6 +143,10 @@ export async function markCompleted(
   req.status = 'completed'
   req.completedAt = isoNow()
   req.updatedAt = isoNow()
+  req.jobUpdates = [
+    ...(req.jobUpdates ?? []),
+    { status: 'completed', note: bill.note?.trim() || undefined, timestamp: isoNow() },
+  ]
   req.bill = {
     productsCost,
     laborWage,

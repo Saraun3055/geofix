@@ -48,7 +48,11 @@ export function useWorkerJobs(workerId: string | null | undefined) {
     if (isLocalApi && workerId) return getWorkerJobs(workerId)
     const store = getDemoStore()
     return store.requests
-      .filter((r) => r.workerId === workerId && ['accepted', 'completed'].includes(r.status))
+      .filter(
+        (r) =>
+          r.workerId === workerId &&
+          ['accepted', 'on_the_way', 'arrived', 'in_progress', 'completed'].includes(r.status),
+      )
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
   }
   return useQuery({

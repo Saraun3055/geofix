@@ -11,7 +11,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useCurrentLocation, DEFAULT_LOCATION } from '@/hooks/use-geo'
 import { createRequest } from '@/services/requests.service'
 import { uploadPhotos, readAsDataUrl } from '@/lib/storage'
-import { CATEGORY_LIST } from '@/lib/types'
+import { CATEGORY_LIST, SUBCATEGORIES_MAP, type ServiceCategory } from '@/lib/types'
 import { isDemo } from '@/lib/mode'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -41,6 +41,15 @@ export default function CustomerNewRequest() {
   const [files, setFiles] = useState<File[]>([])
   const [previews, setPreviews] = useState<string[]>([])
   const [busy, setBusy] = useState(false)
+  const [activeSub, setActiveSub] = useState('')
+
+  const subcategories = SUBCATEGORIES_MAP[category as ServiceCategory] ?? []
+
+  function chooseSubcategory(sub: string) {
+    setActiveSub(sub)
+    setTitle(sub)
+    setDescription('')
+  }
 
   // In demo mode we pin to the seeded demo city (Madurai) so nearby workers
   // always show up — no browser permission prompt, no empty radius.
@@ -96,7 +105,13 @@ export default function CustomerNewRequest() {
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-1.5">
           <Label>Category</Label>
-          <Select value={category} onValueChange={setCategory}>
+          <Select
+            value={category}
+            onValueChange={(c) => {
+              setCategory(c)
+              setActiveSub('')
+            }}
+          >
             <SelectTrigger className="h-11">
               <SelectValue placeholder="Pick a category" />
             </SelectTrigger>
@@ -109,6 +124,30 @@ export default function CustomerNewRequest() {
             </SelectContent>
           </Select>
         </div>
+
+        {subcategories.length > 0 && (
+          <div className="space-y-2">
+            <Label>Common issues</Label>
+            <div className="flex flex-wrap gap-2">
+              {subcategories.map((sub) => (
+                <button
+                  key={sub}
+                  type="button"
+                  onClick={() => chooseSubcategory(sub)}
+                  className={cn(
+                    'rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors cursor-pointer',
+                    activeSub === sub
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground',
+                  )}
+                >
+                  {sub}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">Tap one to auto-fill the title — or type your own below.</p>
+          </div>
+        )}
 
         <div className="space-y-1.5">
           <Label htmlFor="title">What’s wrong? (short title)</Label>
@@ -133,7 +172,8 @@ export default function CustomerNewRequest() {
         </div>
 
         <div className="space-y-1.5">
-          <Label>Photos</Label>
+          <Label>Photos (optional)</Label>
+          <p className="text-xs text-muted-foreground">Add a photo of the problem so the worker knows what to expect.</p>
           <label
             className={cn(
               'flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-muted/40 px-4 py-6 text-sm text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary',

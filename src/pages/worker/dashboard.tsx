@@ -15,6 +15,7 @@ import { Stars } from '@/components/stars'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { CategoryIcon } from '@/components/category-icon'
 import { timeAgoShort, cn } from '@/lib/utils'
 import { getDemoStore, persistDemoStore } from '@/lib/demo'
 import { isLocalApi } from '@/lib/mode'
@@ -63,6 +64,13 @@ export default function WorkerDashboard() {
 
   const completedJobs = jobs.data?.filter((j) => j.status === 'completed') ?? []
 
+  function verificationLabel(): string {
+    if (!profile) return '—'
+    if (profile.verificationStatus === 'approved') return 'Approved'
+    if (profile.verificationStatus === 'rejected') return 'Rejected'
+    return profile.govIdUrl ? 'In progress' : 'Pending'
+  }
+
   return (
     <div className="mx-auto max-w-4xl space-y-7 animate-in">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -96,7 +104,7 @@ export default function WorkerDashboard() {
             {[
               { label: 'Jobs done', value: String(profile?.jobsCompleted ?? 0), icon: Briefcase },
               { label: 'Avg response', value: profile?.avgResponseMin ? `${profile.avgResponseMin}m` : '—', icon: Clock },
-              { label: 'Verification', value: profile?.verificationStatus ?? '—', icon: TrendingUp },
+              { label: 'Verification', value: verificationLabel(), icon: TrendingUp },
             ].map((s) => (
               <div key={s.label} className="rounded-xl border border-border bg-background/60 px-4 py-3">
                 <s.icon className="mb-1.5 h-4 w-4 text-primary" />
@@ -123,8 +131,9 @@ export default function WorkerDashboard() {
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="font-display text-base font-semibold">{r.title}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {r.customerName} · {r.category} · {timeAgoShort(r.createdAt)} ago
+                    <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                      {r.customerName} · {r.category}
+                      <CategoryIcon category={r.category} className="h-3.5 w-3.5" /> · {timeAgoShort(r.createdAt)} ago
                     </p>
                   </div>
                   <Button size="sm" onClick={() => navigate('/worker/incoming')}>
@@ -160,11 +169,13 @@ export default function WorkerDashboard() {
                   <div>
                     <p className="text-sm font-semibold">{r.title}</p>
                     <p className="text-xs text-muted-foreground">
-                      {r.customerName} · completed {timeAgoShort(r.completedAt ?? r.createdAt)} ago
+                      {r.customerName} · {r.paymentStatus === 'paid' ? `completed ${timeAgoShort(r.completedAt ?? r.createdAt)} ago` : `job done · awaiting payment`}
                     </p>
                   </div>
                 </div>
-                <Badge variant="success">Complete</Badge>
+                <Badge variant={r.paymentStatus === 'paid' ? 'success' : 'warning'}>
+                      {r.paymentStatus === 'paid' ? 'Complete' : 'Payment due'}
+                    </Badge>
               </div>
             ))}
           </div>

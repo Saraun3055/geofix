@@ -25,6 +25,8 @@ import { timeAgoShort } from '@/lib/utils'
 
 const CHART_COLORS = ['#b7512e', '#f2a23c', '#9a6a10', '#6d8b3f', '#b3382c', '#40332b', '#7c6b5e', '#c9a26b']
 
+const ACTIVE_STATUSES = ['searching', 'pending_worker_response', 'accepted', 'on_the_way', 'arrived', 'in_progress']
+
 function StatBlock({
   label,
   value,
@@ -93,7 +95,7 @@ export default function AdminOverview() {
 
   const mapMarkers = useMemo(() => {
     const markers: MapMarker[] = []
-    requests?.filter((r) => ['searching', 'pending_worker_response', 'accepted'].includes(r.status)).forEach((r) => {
+    requests?.filter((r) => ACTIVE_STATUSES.includes(r.status)).forEach((r) => {
       if (!r.customerLocation) return
       markers.push({
         id: `req-${r.id}`,
@@ -101,7 +103,12 @@ export default function AdminOverview() {
         lng: r.customerLocation.longitude,
         label: r.category,
         kind: 'request',
-        color: r.status === 'accepted' ? '#2f6f4f' : r.status === 'pending_worker_response' ? '#c9a26b' : '#b7512e',
+        color:
+          r.status === 'accepted' || r.status === 'on_the_way' || r.status === 'arrived' || r.status === 'in_progress'
+            ? '#2f6f4f'
+            : r.status === 'pending_worker_response'
+              ? '#c9a26b'
+              : '#b7512e',
       })
     })
     workers?.filter((w) => w.isOnline).forEach((w, i) => {
@@ -111,6 +118,7 @@ export default function AdminOverview() {
         lng: w.g.geopoint.longitude,
         label: w.name.split(' ')[0],
         kind: 'worker',
+        category: w.categorySkills[0],
         color: '#2f6f4f',
       })
       void i
@@ -243,7 +251,7 @@ export default function AdminOverview() {
           </div>
           <div className="mt-3 space-y-2 overflow-x-auto">
             {(requests ?? [])
-              .filter((r) => ['searching', 'pending_worker_response', 'accepted'].includes(r.status))
+              .filter((r) => ACTIVE_STATUSES.includes(r.status))
               .slice(0, 6)
               .map((r) => (
                 <div key={r.id} className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background/60 px-3 py-2">

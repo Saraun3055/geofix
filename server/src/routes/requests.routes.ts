@@ -1,5 +1,5 @@
 import { Router, type Response } from 'express'
-import { ServiceRequest, toRequestDoc } from '../models/ServiceRequest'
+import { ServiceRequest, toRequestDoc, type RequestDoc } from '../models/ServiceRequest'
 import { WorkerProfile } from '../models/WorkerProfile'
 import { Dispute, toDisputeDoc, type DisputeDoc } from '../models/Dispute'
 import { latLngToGeo, parseLatLng, type LatLng } from '../utils/geo'
@@ -32,8 +32,8 @@ router.post('/', async (req: AuthRequest, res: Response) => {
   const loc = parseLatLng(body.location)
 
   try {
-    if (!body.category || !body.title || !body.description) {
-      res.status(400).json({ message: 'category, title and description are required' })
+    if (!body.category || !body.title) {
+      res.status(400).json({ message: 'category and title are required' })
       return
     }
     if (!loc) {
@@ -50,7 +50,7 @@ router.post('/', async (req: AuthRequest, res: Response) => {
       customerName: req.body.customerName ?? '',
       category: body.category,
       title: body.title,
-      description: body.description,
+      description: typeof body.description === 'string' ? body.description : '',
       photoUrls: Array.isArray(body.photoUrls) ? body.photoUrls : [],
       status: 'searching',
       customerLocation: latLngToGeo(loc),
@@ -98,7 +98,7 @@ router.get('/worker/:workerId', async (req: AuthRequest, res: Response) => {
   try {
     const docs = await ServiceRequest.find({
       workerId: req.params.workerId,
-      status: { $in: ['accepted', 'completed'] },
+      status: { $in: ['accepted', 'on_the_way', 'arrived', 'in_progress', 'completed'] },
     })
       .sort({ updatedAt: -1 })
       .lean()
@@ -173,6 +173,7 @@ router.patch('/:id/accept', async (req: AuthRequest, res: Response) => {
     doc.status = 'accepted'
     doc.acceptedAt = new Date()
     doc.updatedAt = new Date()
+    doc.jobUpdates.push({ status: 'accepted', note: undefined, timestamp: new Date() })
     if (workerId) doc.workerId = workerId
     doc.workerName = worker?.name ?? doc.workerName
     doc.whatsappNumber = worker?.phone ?? doc.whatsappNumber
@@ -216,6 +217,46 @@ router.patch('/:id/reject', async (req: AuthRequest, res: Response) => {
   }
 })
 
+/** Worker advances a job through its active lifecycle: accepted → on_the_way → arrived → in_progress. */
+router.patch('/:id/progress', async (req: AuthRequest, res: Response) => {
+  const { status, note } = req.body as { status?: string; note?: string }
+  const VALID_TRANSITION = new Map<string, string>([
+    ['accepted', 'on_the_way'],
+    ['on_the_way', 'arrived'],
+    ['arrived', 'in_progress'],
+  ])
+  try {
+    const doc = await ServiceRequest.findById(req.params.id)
+    if (!doc) {
+      res.status(404).json({ message: 'Request not found' })
+      return
+    }
+    if (!doc.workerId || doc.workerId !== req.user!.id) {
+      res.status(403).json({ message: 'Only the assigned worker can update this job' })
+      return
+    }
+    if (!status || !Array.from(VALID_TRANSITION.values()).includes(status)) {
+      res.status(400).json({ message: 'status must be on_the_way, arrived or in_progress' })
+      return
+    }
+    if (VALID_TRANSITION.get(doc.status) !== status) {
+      res.status(409).json({ message: `Cannot move this job from ${doc.status} to ${status}` })
+      return
+    }
+    doc.status = status as RequestDoc['status']
+    doc.updatedAt = new Date()
+    doc.jobUpdates.push({
+      status,
+      note: typeof note === 'string' && note.trim() ? note.trim() : undefined,
+      timestamp: new Date(),
+    })
+    await doc.save()
+    res.json(toRequestDoc({ ...doc.toObject(), _id: doc._id }))
+  } catch {
+    res.status(500).json({ message: 'Something went wrong' })
+  }
+})
+
 /** Worker marks the request complete and submits a bill. */
 router.patch('/:id/complete', async (req: AuthRequest, res: Response) => {
   const { workerId, productsCost, laborWage, note } = req.body as {
@@ -235,7 +276,7 @@ router.patch('/:id/complete', async (req: AuthRequest, res: Response) => {
       res.status(403).json({ message: 'Only the assigned worker can complete this request' })
       return
     }
-    if (doc.status !== 'accepted') {
+    if (!['accepted', 'on_the_way', 'arrived', 'in_progress'].includes(doc.status)) {
       res.status(409).json({ message: 'This request is not in progress yet' })
       return
     }
@@ -248,6 +289,11 @@ router.patch('/:id/complete', async (req: AuthRequest, res: Response) => {
     doc.status = 'completed'
     doc.completedAt = new Date()
     doc.updatedAt = new Date()
+    doc.jobUpdates.push({
+      status: 'completed',
+      note: typeof note === 'string' && note.trim() ? note.trim() : undefined,
+      timestamp: new Date(),
+    })
     doc.bill = {
       productsCost: products,
       laborWage: labor,
@@ -319,6 +365,7 @@ router.patch('/:id/cancel', async (req: AuthRequest, res: Response) => {
     }
     doc.status = 'cancelled'
     doc.updatedAt = new Date()
+    doc.jobUpdates.push({ status: 'cancelled', note: undefined, timestamp: new Date() })
     await doc.save()
     if (doc.workerId) await WorkerProfile.updateOne({ userId: doc.workerId }, { currentRequestId: null })
     res.json(toRequestDoc({ ...doc.toObject(), _id: doc._id }))

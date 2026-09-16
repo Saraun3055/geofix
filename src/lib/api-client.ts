@@ -9,10 +9,12 @@ import { useAuthStore } from '@/stores/auth'
  */
 export class ApiError extends Error {
   status: number
-  constructor(message: string, status: number) {
+  errors?: Record<string, string>
+  constructor(message: string, status: number, errors?: Record<string, string>) {
     super(message)
     this.name = 'ApiError'
     this.status = status
+    this.errors = errors
   }
 }
 
@@ -38,13 +40,15 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 
   if (!res.ok) {
     let message = res.statusText || `Request failed (${res.status})`
+    let errors: Record<string, string> | undefined
     try {
-      const body = (await res.json()) as { message?: string }
+      const body = (await res.json()) as { message?: string; errors?: Record<string, string> }
       if (body?.message) message = body.message
+      if (body?.errors) errors = body.errors
     } catch {
       /* non-JSON error body */
     }
-    throw new ApiError(message, res.status)
+    throw new ApiError(message, res.status, errors)
   }
 
   if (res.status === 204) return undefined as T

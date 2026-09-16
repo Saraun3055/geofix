@@ -14,6 +14,7 @@ import {
 import { Logo } from '@/components/logo'
 import { Button } from '@/components/ui/button'
 import { Stars } from '@/components/stars'
+import { CategoryIcon } from '@/components/category-icon'
 import { CATEGORY_LIST } from '@/lib/types'
 
 const steps = [
@@ -122,7 +123,7 @@ function Hero() {
                       key={c}
                       className="flex flex-col items-center gap-1.5 rounded-xl border border-border bg-background/60 px-2 py-3 text-center"
                     >
-                      <Wrench className="h-4 w-4 text-primary" />
+                      <CategoryIcon category={c} className="h-4 w-4 text-primary" />
                       <span className="text-[11px] font-medium leading-tight">{c}</span>
                     </div>
                   ))}

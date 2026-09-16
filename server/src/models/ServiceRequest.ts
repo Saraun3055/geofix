@@ -8,12 +8,32 @@ export const serviceRequestSchema = new Schema({
   workerName: { type: String, default: null },
   category: { type: String, required: true },
   title: { type: String, required: true },
-  description: { type: String, required: true },
+  description: { type: String, default: '' },
   photoUrls: { type: [String], default: [] },
   status: {
     type: String,
-    enum: ['searching', 'pending_worker_response', 'accepted', 'rejected', 'completed', 'cancelled'],
+    enum: [
+      'searching',
+      'pending_worker_response',
+      'accepted',
+      'on_the_way',
+      'arrived',
+      'in_progress',
+      'rejected',
+      'completed',
+      'cancelled',
+    ],
     default: 'searching',
+  },
+  jobUpdates: {
+    type: [
+      {
+        status: { type: String, required: true },
+        note: { type: String, default: null },
+        timestamp: { type: Date, default: Date.now },
+      },
+    ],
+    default: [],
   },
   customerLocation: {
     type: { type: String, enum: ['Point'], default: 'Point' },
@@ -48,6 +68,23 @@ serviceRequestSchema.index({ customerLocation: '2dsphere' })
 export const ServiceRequest = model('ServiceRequest', serviceRequestSchema)
 export type ServiceRequestModel = InferSchemaType<typeof serviceRequestSchema>
 
+export type RequestStatus =
+  | 'searching'
+  | 'pending_worker_response'
+  | 'accepted'
+  | 'on_the_way'
+  | 'arrived'
+  | 'in_progress'
+  | 'rejected'
+  | 'completed'
+  | 'cancelled'
+
+export interface RequestJobUpdate {
+  status: RequestStatus
+  note?: string
+  timestamp: string
+}
+
 export interface RequestDoc {
   id: string
   customerId: string
@@ -58,7 +95,8 @@ export interface RequestDoc {
   title: string
   description: string
   photoUrls: string[]
-  status: 'searching' | 'pending_worker_response' | 'accepted' | 'rejected' | 'completed' | 'cancelled'
+  status: RequestStatus
+  jobUpdates?: RequestJobUpdate[]
   customerLocation: LatLng
   customerAddress?: string
   rejectedBy: string[]
@@ -89,6 +127,11 @@ export function toRequestDoc(r: ServiceRequestModel & { _id: unknown }): Request
     description: r.description,
     photoUrls: r.photoUrls ?? [],
     status: r.status as RequestDoc['status'],
+    jobUpdates: (r.jobUpdates ?? []).map((u) => ({
+      status: (u as { status?: RequestStatus }).status as RequestStatus,
+      note: (u as { note?: string }).note ?? undefined,
+      timestamp: iso((u as { timestamp?: unknown }).timestamp) ?? new Date().toISOString(),
+    })),
     customerLocation: { latitude: lat, longitude: lng },
     customerAddress: r.customerAddress ?? undefined,
     rejectedBy: r.rejectedBy ?? [],

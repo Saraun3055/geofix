@@ -18,6 +18,23 @@ import type {
  */
 
 /* ──────────────────── Auth ──────────────────── */
+export async function checkPhoneExists(phone: string): Promise<boolean> {
+  try {
+    const res = await api.post<{ exists?: boolean }>('/auth/phone-exists', { phone })
+    return Boolean(res.exists)
+  } catch {
+    return false
+  }
+}
+
+export async function checkEmailExists(email: string): Promise<boolean> {
+  try {
+    const res = await api.post<{ exists?: boolean }>('/auth/email-exists', { email })
+    return Boolean(res.exists)
+  } catch {
+    return false
+  }
+}
 type AuthResponse = { accessToken: string; user: UserDoc }
 
 type RawUser = {
@@ -176,6 +193,19 @@ export async function acceptApiRequest(requestId: string, workerId: string): Pro
 export async function rejectApiRequest(requestId: string, workerId: string): Promise<boolean> {
   try {
     await api.patch<void>(`/requests/${requestId}/reject`, { workerId })
+    return true
+  } catch {
+    return false
+  }
+}
+
+export async function updateJobProgressApi(
+  requestId: string,
+  status: 'on_the_way' | 'arrived' | 'in_progress',
+  note?: string,
+): Promise<boolean> {
+  try {
+    await api.patch<void>(`/requests/${requestId}/progress`, { status, note })
     return true
   } catch {
     return false

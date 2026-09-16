@@ -9,6 +9,7 @@ import { Stars } from '@/components/stars'
 import { StatusBadge } from '@/components/status-badge'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
+import { CategoryIcon } from '@/components/category-icon'
 
 import { toastError, toastSuccess } from '@/hooks/use-toast'
 import { haversine } from '@/lib/geo'
@@ -173,7 +174,8 @@ export default function CustomerWorkers() {
                       </span>
                     )}
                   </div>
-                  <p className="mt-0.5 text-sm text-muted-foreground">
+                  <p className="mt-0.5 flex items-center gap-1.5 text-sm text-muted-foreground">
+                    <CategoryIcon category={worker.categorySkills[0] ?? ''} className="h-3.5 w-3.5" />
                     {worker.categorySkills.join(' · ')}
                   </p>
                   <div className="mt-1.5 flex flex-wrap items-center gap-3 text-sm">

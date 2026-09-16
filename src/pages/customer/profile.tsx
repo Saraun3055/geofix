@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { UserRound, Phone, Mail, MapPin, ArrowUpRight, Package, CheckCircle2, Clock3 } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { StatusBadge } from '@/components/status-badge'
+import { CategoryIcon } from '@/components/category-icon'
 import { useAuthStore } from '@/stores/auth'
 import { useMyRequests } from '@/hooks/use-requests'
 
@@ -13,7 +14,9 @@ export default function CustomerProfile() {
 
   const { data: requests = [], isLoading } = useMyRequests(uid)
 
-  const active = requests.filter((r) => ['searching', 'pending_worker_response', 'accepted'].includes(r.status))
+  const active = requests.filter((r) =>
+    ['searching', 'pending_worker_response', 'accepted', 'on_the_way', 'arrived', 'in_progress'].includes(r.status),
+  )
   const completed = requests.filter((r) => r.status === 'completed')
 
   const initials = name
@@ -90,7 +93,7 @@ export default function CustomerProfile() {
               <div className="min-w-0">
                 <div className="truncate font-medium">{r.title}</div>
                 <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-                  {r.category}
+                  <CategoryIcon category={r.category} className="h-3.5 w-3.5" /> {r.category}
                   {r.workerName && <span>· {r.workerName}</span>}
                 </div>
               </div>

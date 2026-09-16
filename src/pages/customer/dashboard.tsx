@@ -1,6 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom'
 import {
-  Wrench,
   MapPin,
   ArrowRight,
   Clock3,
@@ -9,21 +8,24 @@ import {
 } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth'
 import { useMyRequests } from '@/hooks/use-requests'
-import { CATEGORY_LIST } from '@/lib/types'
+import { CATEGORY_LIST, type RequestStatus } from '@/lib/types'
 import { StatusBadge } from '@/components/status-badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
-import { formatRelativeTime } from '@/lib/utils'
+import { CategoryIcon } from '@/components/category-icon'
+import { formatRelativeTime, cn } from '@/lib/utils'
 
-const categoryIcons: Record<string, React.ComponentType<{ className?: string }>> = {
-  Plumbing: Wrench,
-  Electrical: Wrench,
-  Carpentry: Wrench,
-  Painting: Wrench,
-  Appliance: Wrench,
-  Locksmith: Wrench,
-  'AC / HVAC': Wrench,
-  General: Wrench,
+function progressPercent(status: RequestStatus) {
+  switch (status) {
+    case 'searching': return 10
+    case 'pending_worker_response': return 25
+    case 'accepted': return 40
+    case 'on_the_way': return 55
+    case 'arrived': return 70
+    case 'in_progress': return 85
+    case 'completed': return 100
+    default: return 0
+  }
 }
 
 export default function CustomerDashboard() {
@@ -32,7 +34,9 @@ export default function CustomerDashboard() {
   const navigate = useNavigate()
   const { data: requests, isLoading } = useMyRequests(uid)
 
-  const active = requests?.find((r) => ['searching', 'pending_worker_response', 'accepted'].includes(r.status))
+  const active = requests?.find((r) =>
+    ['searching', 'pending_worker_response', 'accepted', 'on_the_way', 'arrived', 'in_progress'].includes(r.status),
+  )
   const history = requests?.filter((r) => ['completed', 'cancelled', 'rejected'].includes(r.status)) ?? []
 
   return (
@@ -62,9 +66,22 @@ export default function CustomerDashboard() {
               </p>
             </div>
           </div>
-          <Button variant="ghost" size="sm">
-            Track live <ArrowRight className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-3">
+            <div className="hidden w-36 sm:block">
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                <div
+                  className={cn(
+                    'h-full rounded-full bg-primary transition-all duration-700',
+                    active.status === 'completed' && 'bg-emerald-500',
+                  )}
+                  style={{ width: `${progressPercent(active.status)}%` }}
+                />
+              </div>
+            </div>
+            <Button variant="ghost" size="sm">
+              Track live <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
         </Link>
       )}
 
@@ -72,7 +89,6 @@ export default function CustomerDashboard() {
         <h2 className="font-display text-lg font-semibold">Start a new request</h2>
         <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {CATEGORY_LIST.map((cat) => {
-            const Icon = categoryIcons[cat] ?? Wrench
             return (
               <button
                 key={cat}
@@ -80,7 +96,7 @@ export default function CustomerDashboard() {
                 className="paper-card paper-card-hover group flex flex-col items-start gap-3 p-4 text-left cursor-pointer"
               >
                 <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary text-primary transition-transform group-hover:scale-105">
-                  <Icon className="h-4 w-4" />
+                  <CategoryIcon category={cat} className="h-4 w-4" />
                 </span>
                 <span className="text-sm font-semibold leading-tight">{cat}</span>
               </button>
@@ -125,9 +141,13 @@ export default function CustomerDashboard() {
             {history.slice(0, 4).map((r) => (
               <li key={r.id} className="flex items-center justify-between gap-4 px-4 py-3.5">
                 <div className="flex min-w-0 items-center gap-3">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-primary">
-                    <Wrench className="h-4 w-4" />
-                  </span>
+                  {r.photoUrls && r.photoUrls[0] && (
+                    <img src={r.photoUrls[0]} alt="" className="h-9 w-9 shrink-0 rounded-lg object-cover border border-border" />
+                  ) || (
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-primary">
+                      <CategoryIcon category={r.category} className="h-4 w-4" />
+                    </span>
+                  )}
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold">{r.title}</p>
                     <p className="flex items-center gap-2 text-xs text-muted-foreground">

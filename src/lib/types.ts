@@ -52,9 +52,20 @@ export type RequestStatus =
   | 'searching'
   | 'pending_worker_response'
   | 'accepted'
+  | 'on_the_way'
+  | 'arrived'
+  | 'in_progress'
   | 'rejected'
   | 'completed'
   | 'cancelled'
+
+export type JobProgressStatus = 'on_the_way' | 'arrived' | 'in_progress'
+
+export interface JobUpdateDoc {
+  status: RequestStatus
+  note?: string
+  timestamp: string
+}
 
 export type PaymentMethod = 'cash' | 'upi'
 export type PaymentStatus = 'pending' | 'paid'
@@ -78,6 +89,7 @@ export interface ServiceRequestDoc {
   description: string
   photoUrls: string[]
   status: RequestStatus
+  jobUpdates?: JobUpdateDoc[]
   customerLocation: GeoPointLike
   customerAddress?: string
   rejectedBy: string[]
@@ -164,10 +176,64 @@ export const CATEGORY_LIST = [
 
 export type ServiceCategory = (typeof CATEGORY_LIST)[number]
 
+export const SUBCATEGORIES_MAP: Record<ServiceCategory, string[]> = {
+  Electrical: [
+    'Fan not working / making noise',
+    'Switchboard / Socket repair',
+    'Short circuit & sparking fix',
+    'Light fixture installation',
+    'MCB Tripping / Main Board issue',
+  ],
+  Plumbing: [
+    'Leaking tap / faucet',
+    'Blocked drain / pipe overflow',
+    'Flush tank / Toilet repair',
+    'Water heater / Geyser installation',
+    'Water tank leakage',
+  ],
+  'AC / HVAC': [
+    'AC not cooling / low airflow',
+    'Gas refill & leak repair',
+    'AC filter & coil cleaning',
+    'Water leaking from indoor unit',
+    'AC noise / compressor issue',
+  ],
+  Carpentry: [
+    'Door lock & latch repair',
+    'Cabinet / Drawer hinge fixing',
+    'Furniture assembly / repair',
+    'Bed frame / Wooden table fix',
+  ],
+  Painting: [
+    'Touch-up / Single wall painting',
+    'Full room repainting',
+    'Dampness & seepage treatment',
+  ],
+  Appliance: [
+    'Washing machine not spinning',
+    'Refrigerator not cooling',
+    'Microwave oven repair',
+    'RO water purifier filter change',
+  ],
+  Locksmith: [
+    'Emergency door lockout',
+    'New lock installation',
+    'Key duplication & cylinder change',
+  ],
+  General: [
+    'Drilling & hanging items',
+    'General home maintenance',
+    'Curtain rod installation',
+  ],
+}
+
 export const STATUS_LABEL: Record<RequestStatus, string> = {
   searching: 'Searching for a worker',
   pending_worker_response: 'Worker notified',
   accepted: 'Worker on the way',
+  on_the_way: 'On the way',
+  arrived: 'Worker arrived',
+  in_progress: 'Work in progress',
   rejected: 'Worker declined',
   completed: 'Job completed',
   cancelled: 'Cancelled',
@@ -177,6 +243,9 @@ export const STATUS_COLOR: Record<RequestStatus, string> = {
   searching: 'bg-amber-100 text-amber-800',
   pending_worker_response: 'bg-blue-100 text-blue-800',
   accepted: 'bg-emerald-100 text-emerald-800',
+  on_the_way: 'bg-sky-100 text-sky-800',
+  arrived: 'bg-indigo-100 text-indigo-800',
+  in_progress: 'bg-violet-100 text-violet-800',
   rejected: 'bg-rose-100 text-rose-800',
   completed: 'bg-green-100 text-green-800',
   cancelled: 'bg-stone-200 text-stone-600',

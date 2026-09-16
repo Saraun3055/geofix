@@ -1,13 +1,16 @@
 import { useNavigate } from 'react-router-dom'
-import { MapPin, Check, X, Clock3, Inbox } from 'lucide-react'
+import { MapPin, Check, X, Clock3, Inbox, Hammer, Image as ImageIcon } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth'
-import { useWorkerIncoming } from '@/hooks/use-requests'
+import { useWorkerIncoming, useWorkerJobs } from '@/hooks/use-requests'
 import { useWorkerProfile } from '@/hooks/use-workers'
 import { acceptRequest, rejectRequest } from '@/services/requests.service'
 import { EmptyState } from '@/components/empty-state'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
+import { StatusBadge } from '@/components/status-badge'
+import { JobProgressStepper } from '@/components/job-progress'
+import { CategoryIcon } from '@/components/category-icon'
 import { toastSuccess } from '@/hooks/use-toast'
 import { useState } from 'react'
 import { timeAgoShort } from '@/lib/utils'
@@ -17,8 +20,13 @@ export default function WorkerIncoming() {
   const uid = useAuthStore((s) => s.uid)!
   const navigate = useNavigate()
   const { data: requests, isLoading } = useWorkerIncoming(uid)
+  const { data: jobs } = useWorkerJobs(uid)
   const { data: profile } = useWorkerProfile(uid)
   const [busyId, setBusyId] = useState<string | null>(null)
+
+  const activeJobs = (jobs ?? []).filter((j) =>
+    ['accepted', 'on_the_way', 'arrived', 'in_progress'].includes(j.status),
+  )
 
   async function handle(action: 'accept' | 'reject', requestId: string) {
     setBusyId(requestId)
@@ -51,6 +59,36 @@ export default function WorkerIncoming() {
         </p>
       </div>
 
+      {activeJobs.length > 0 && (
+        <section>
+          <div className="flex items-center justify-between">
+            <h2 className="flex items-center gap-1.5 font-display text-lg font-semibold">
+              <Hammer className="h-4 w-4 text-primary" /> Active jobs
+            </h2>
+            <Button variant="ghost" size="sm" onClick={() => navigate('/worker/jobs')}>
+              History →
+            </Button>
+          </div>
+          <div className="mt-3 space-y-3">
+            {activeJobs.map((job) => (
+              <div key={job.id} className="paper-card p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-display text-base font-semibold">{job.title}</p>
+                    <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                      {job.customerName ?? 'Customer'} · {job.category}
+                      <CategoryIcon category={job.category} className="h-3.5 w-3.5" />
+                    </p>
+                  </div>
+                  <StatusBadge status={job.status} />
+                </div>
+                <JobProgressStepper job={job} onCompleteClick={() => navigate('/worker/jobs')} />
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {!requests || requests.length === 0 ? (
         <EmptyState
           icon={Inbox}
@@ -76,8 +114,9 @@ export default function WorkerIncoming() {
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <h3 className="font-display text-lg font-semibold">{r.title}</h3>
-                    <p className="mt-0.5 text-sm text-muted-foreground">
+                    <p className="mt-0.5 flex items-center gap-1.5 text-sm text-muted-foreground">
                       {r.customerName ?? 'Customer'} · {r.category}
+                      <CategoryIcon category={r.category} className="h-3.5 w-3.5" />
                     </p>
                   </div>
                   <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-muted-foreground">
@@ -86,6 +125,19 @@ export default function WorkerIncoming() {
                 </div>
 
                 {r.description && <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{r.description}</p>}
+
+                {r.photoUrls && r.photoUrls.length > 0 && (
+                  <div className="mt-3 flex items-center gap-2">
+                    <ImageIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                    <div className="flex gap-1.5 overflow-x-auto">
+                      {r.photoUrls.slice(0, 4).map((url, i) => (
+                        <a key={i} href={url} target="_blank" rel="noreferrer" className="block shrink-0 overflow-hidden rounded-lg border border-border">
+                          <img src={url} alt={`Photo ${i + 1}`} className="h-14 w-14 object-cover" />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
                   {dist && (

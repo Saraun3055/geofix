@@ -101,7 +101,15 @@ export default function WorkerProfile() {
               <div className="truncate text-2xl font-semibold">{profile?.name ?? name}</div>
               <CardDescription>
                 {profile?.isOnline ? 'Online · available for jobs' : 'Offline'}
-                {profile?.verificationStatus ? ` · ${profile.verificationStatus}` : ''}
+                {profile?.verificationStatus
+                  ? ` · ${profile.verificationStatus === 'approved'
+                      ? 'verified'
+                      : profile.verificationStatus === 'rejected'
+                        ? 'verification rejected'
+                        : profile.govIdUrl
+                          ? 'verification in progress'
+                          : 'verification pending'}`
+                  : ''}
               </CardDescription>
             </div>
           </CardTitle>

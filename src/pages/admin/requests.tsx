@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { ListChecks, Search, ChevronDown } from 'lucide-react'
 import { useAllRequests } from '@/hooks/use-requests'
 import { StatusBadge } from '@/components/status-badge'
+import { CategoryIcon } from '@/components/category-icon'
 import {
   Dialog,
   DialogContent,
@@ -16,15 +17,42 @@ import { EmptyState } from '@/components/empty-state'
 import { formatRelativeTime } from '@/lib/utils'
 import { CATEGORY_LIST, type RequestStatus, type ServiceRequestDoc } from '@/lib/types'
 
-const STATUSES: (RequestStatus | 'all')[] = ['all', 'searching', 'pending_worker_response', 'accepted', 'completed', 'cancelled', 'rejected']
+const STATUSES: (RequestStatus | 'all')[] = [
+  'all',
+  'searching',
+  'pending_worker_response',
+  'accepted',
+  'on_the_way',
+  'arrived',
+  'in_progress',
+  'completed',
+  'cancelled',
+  'rejected',
+]
+
+const UPDATE_ENTRY: Record<string, { label: string; note: string }> = {
+  accepted: { label: 'Worker accepted', note: 'took the job' },
+  on_the_way: { label: 'Worker on the way', note: 'started travelling to the customer' },
+  arrived: { label: 'Worker arrived', note: 'reached the customer location' },
+  in_progress: { label: 'Work started', note: 'worker began the job' },
+  completed: { label: 'Job completed', note: 'worker marked complete' },
+  cancelled: { label: 'Cancelled', note: 'request cancelled by customer' },
+}
 
 function timelineEntries(r: ServiceRequestDoc) {
   const entries: { label: string; time?: string; note: string }[] = []
   entries.push({ label: 'Request created', time: r.createdAt, note: `${r.customerName ?? r.customerId} posted "${r.title}"` })
-  if (r.acceptedAt) entries.push({ label: 'Worker accepted', time: r.acceptedAt, note: `${r.workerName ?? r.workerId} took the job` })
-  if (r.completedAt) entries.push({ label: 'Job completed', time: r.completedAt, note: 'Worker marked complete' })
-  if (r.ratingGiven) entries.push({ label: 'Rating submitted', note: 'Customer rated the worker' })
-  if (r.status === 'cancelled') entries.push({ label: 'Cancelled', note: 'Request cancelled by customer' })
+  if (r.jobUpdates && r.jobUpdates.length > 0) {
+    r.jobUpdates.forEach((u) => {
+      const entry = UPDATE_ENTRY[u.status]
+      if (entry) entries.push({ label: entry.label, time: u.timestamp, note: u.note ? `${entry.note} · ${u.note}` : entry.note })
+    })
+  } else {
+    if (r.acceptedAt) entries.push({ label: 'Worker accepted', time: r.acceptedAt, note: `${r.workerName ?? r.workerId} took the job` })
+    if (r.completedAt) entries.push({ label: 'Job completed', time: r.completedAt, note: 'Worker marked complete' })
+    if (r.ratingGiven) entries.push({ label: 'Rating submitted', note: 'Customer rated the worker' })
+    if (r.status === 'cancelled') entries.push({ label: 'Cancelled', note: 'Request cancelled by customer' })
+  }
   return entries
 }
 
@@ -127,7 +155,9 @@ export default function AdminRequests() {
                 >
                   <td className="px-4 py-3">
                     <p className="max-w-64 truncate font-medium">{r.title}</p>
-                    <p className="text-xs text-muted-foreground">{r.category} · {r.id.slice(0, 8)}</p>
+                    <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <CategoryIcon category={r.category} className="h-3.5 w-3.5" /> {r.category} · {r.id.slice(0, 8)}
+                    </p>
                   </td>
                   <td className="hidden px-4 py-3 text-muted-foreground md:table-cell">{r.customerName ?? '—'}</td>
                   <td className="hidden px-4 py-3 text-muted-foreground lg:table-cell">{r.workerName ?? '—'}</td>
