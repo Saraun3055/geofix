@@ -1,4 +1,4 @@
-import { Outlet, useNavigate } from 'react-router-dom'
+import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { LayoutDashboard, PlusCircle, UserRound } from 'lucide-react'
 import { AppShell } from '@/components/layout/app-shell'
 import { useAuthStore } from '@/stores/auth'
@@ -7,6 +7,7 @@ export default function CustomerLayout() {
   const name = useAuthStore((s) => s.name) ?? 'Customer'
   const signOut = useAuthStore((s) => s.signOut)
   const navigate = useNavigate()
+  const location = useLocation()
 
   return (
     <AppShell
@@ -23,7 +24,9 @@ export default function CustomerLayout() {
         { to: '/customer/profile', label: 'Profile', icon: UserRound },
       ]}
     >
-      <Outlet />
+      <div key={location.pathname} className="animate-stagger-in">
+        <Outlet />
+      </div>
     </AppShell>
   )
 }

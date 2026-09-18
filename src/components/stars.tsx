@@ -15,13 +15,27 @@ export function Stars({
   const full = Math.floor(value)
   const half = value - full >= 0.4
   return (
-    <span className={cn('inline-flex items-center gap-0.5', className)}>
+    <span className={cn('group inline-flex items-center gap-0.5', className)}>
       {Array.from({ length: 5 }).map((_, i) => {
         if (i < full) {
-          return <Star key={i} width={size} height={size} className="fill-amber-400 text-amber-400" />
+          return (
+            <Star
+              key={i}
+              width={size}
+              height={size}
+              className="fill-amber-400 text-amber-400 drop-shadow-[0_1px_3px_rgba(245,158,11,0.45)] transition-transform duration-300 group-hover:scale-110"
+            />
+          )
         }
         if (i === full && half) {
-          return <StarHalf key={i} width={size} height={size} className="fill-amber-400 text-amber-400" />
+          return (
+            <StarHalf
+              key={i}
+              width={size}
+              height={size}
+              className="fill-amber-400 text-amber-400 drop-shadow-[0_1px_3px_rgba(245,158,11,0.45)] transition-transform duration-300 group-hover:scale-110"
+            />
+          )
         }
         return <Star key={i} width={size} height={size} className="text-muted-foreground/30" />
       })}
@@ -53,7 +67,9 @@ export function StarInput({
             width={size}
             height={size}
             className={cn(
-              i < value ? 'fill-amber-400 text-amber-400' : 'fill-transparent text-muted-foreground/40',
+              i < value
+                ? 'fill-amber-400 text-amber-400 drop-shadow-[0_1px_4px_rgba(245,158,11,0.5)]'
+                : 'fill-transparent text-muted-foreground/40',
               'transition-colors',
             )}
           />

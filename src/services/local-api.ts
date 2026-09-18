@@ -93,6 +93,16 @@ export async function apiMe(): Promise<UserDoc | null> {
   }
 }
 
+/* ──────────────────── Profile ──────────────────── */
+export async function updateMyProfileApi(data: { name?: string; phone?: string }): Promise<UserDoc | null> {
+  try {
+    const updated = await api.patch<RawUser>('/users/me', data)
+    return toUserDoc(updated)
+  } catch {
+    return null
+  }
+}
+
 /* ──────────────────── Workers ──────────────────── */
 export async function nearbyWorkers(params: {
   lat: number

@@ -25,6 +25,8 @@ export type AuthState = {
   signOut: () => void
   setFromDemo: (user: DemoAuthUser) => void
   setFromApi: (user: UserDoc) => void
+  /** Update editable profile details (name / phone) after a save. */
+  applyProfile: (name: string | null, phone?: string | null) => void
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -54,6 +56,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       uid: user.uid,
       name: user.name,
       email: user.email,
+      phone: user.phone ?? null,
       role: user.role,
       adminRole: user.adminRole,
       status: 'authenticated',
@@ -74,6 +77,13 @@ export const useAuthStore = create<AuthState>((set) => ({
       isDemoMode: false,
       accessToken: useAuthStore.getState().accessToken,
     })
+  },
+
+  applyProfile: (name, phone) => {
+    set((s) => ({
+      name: name ?? s.name,
+      phone: phone !== undefined && phone !== null ? (phone === '' ? null : phone) : s.phone,
+    }))
   },
 }))
 

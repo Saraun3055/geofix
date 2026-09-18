@@ -351,7 +351,7 @@ router.post('/:id/pay', async (req: AuthRequest, res: Response) => {
   }
 })
 
-/** Customer cancels a request still in searching/pending state. */
+/** Customer cancels a booking — allowed until the job reaches completion. */
 router.patch('/:id/cancel', async (req: AuthRequest, res: Response) => {
   try {
     const doc = await ServiceRequest.findById(req.params.id)
@@ -359,7 +359,9 @@ router.patch('/:id/cancel', async (req: AuthRequest, res: Response) => {
       res.status(404).json({ message: 'Request not found' })
       return
     }
-    if (!['searching', 'pending_worker_response'].includes(doc.status)) {
+    if (
+      !['searching', 'pending_worker_response', 'accepted', 'on_the_way', 'arrived', 'in_progress'].includes(doc.status)
+    ) {
       res.status(409).json({ message: 'This request can no longer be cancelled' })
       return
     }

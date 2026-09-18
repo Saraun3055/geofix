@@ -1,5 +1,8 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 import { Eye, EyeOff, ArrowRight } from 'lucide-react'
 import { AuthShell } from './auth-layout'
 import { Button } from '@/components/ui/button'
@@ -20,35 +23,44 @@ function portalFor(role: string) {
   return role === 'admin' ? '/admin' : role === 'worker' ? '/worker' : '/customer'
 }
 
-const EMAIL_RE = /^\S+@\S+\.\S+$/
+const loginSchema = z.object({
+  email: z.email('Enter a valid email address'),
+  password: z
+    .string()
+    .min(1, 'Password is required')
+    .min(8, 'Password must be at least 8 characters'),
+})
+
+type LoginFormValues = z.infer<typeof loginSchema>
 
 export default function LoginPage() {
   const navigate = useNavigate()
   const role = useAuthStore((s) => s.role)
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
   const [showPw, setShowPw] = useState(false)
   const [busy, setBusy] = useState(false)
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({})
 
-  function validateForm() {
-    const next: { email?: string; password?: string } = {}
-    if (!EMAIL_RE.test(email.trim())) next.email = 'Enter a valid email address'
-    if (password.length === 0) next.password = 'Password is required'
-    else if (password.length < 8) next.password = 'Password must be at least 8 characters'
-    setErrors(next)
-    return Object.keys(next).length === 0
-  }
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: '', password: '' },
+  })
 
-  async function handleApiLogin(e: React.FormEvent) {
-    e.preventDefault()
-    if (!validateForm()) return
+  async function onSubmit(values: LoginFormValues) {
     setBusy(true)
     try {
-      const { accessToken, user } = await apiLogin(email, password)
-      useAuthStore.getState().setAccessToken(accessToken)
-      useAuthStore.getState().setFromApi(user)
-      navigate(portalFor(user.role), { replace: true })
+      if (isLocalApi) {
+        const { accessToken, user } = await apiLogin(values.email, values.password)
+        useAuthStore.getState().setAccessToken(accessToken)
+        useAuthStore.getState().setFromApi(user)
+        navigate(portalFor(user.role), { replace: true })
+      } else {
+        const res = demoLoginEmail(values.email, values.password)
+        if (!res.ok) throw new Error(res.message)
+        navigate(portalFor(res.role), { replace: true })
+      }
     } catch (err) {
       toastError('Login failed', err instanceof Error ? err.message : 'Check credentials and retry')
     } finally {
@@ -59,17 +71,6 @@ export default function LoginPage() {
   function handleAccount(acc: (typeof DEMO_ACCOUNTS)[number]) {
     demoSignInAccount(acc)
     navigate(portalFor(acc.role), { replace: true })
-  }
-
-  function handleDemoEmail(e: React.FormEvent) {
-    e.preventDefault()
-    if (!validateForm()) return
-    const res = demoLoginEmail(email, password)
-    if (!res.ok) {
-      toastError('Login failed', res.message)
-      return
-    }
-    navigate(portalFor(res.role), { replace: true })
   }
 
   return (
@@ -83,11 +84,11 @@ export default function LoginPage() {
       {isLocalApi ? (
         /* ──────────── Local API accounts ──────────── */
         <div className="mt-6">
-          <form onSubmit={handleApiLogin} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
             <div className="space-y-1.5">
               <Label htmlFor="api-email">Email</Label>
-              <Input id="api-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="worker.demo@geofix.app" required />
-              {errors.email && <p className="text-xs font-medium text-destructive">{errors.email}</p>}
+              <Input id="api-email" type="email" placeholder="worker.demo@geofix.app" {...register('email')} aria-invalid={!!errors.email} />
+              {errors.email && <p className="text-xs font-medium text-destructive">{errors.email.message}</p>}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="api-pw">Password</Label>
@@ -95,11 +96,10 @@ export default function LoginPage() {
                 <Input
                   id="api-pw"
                   type={showPw ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   className="pr-10"
-                  required
+                  {...register('password')}
+                  aria-invalid={!!errors.password}
                 />
                 <button
                   type="button"
@@ -110,7 +110,7 @@ export default function LoginPage() {
                   {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
-              {errors.password && <p className="text-xs font-medium text-destructive">{errors.password}</p>}
+              {errors.password && <p className="text-xs font-medium text-destructive">{errors.password.message}</p>}
             </div>
             <Button type="submit" className="w-full" disabled={busy}>
               {busy ? 'Signing in…' : 'Sign in'}
@@ -161,32 +161,31 @@ export default function LoginPage() {
 
           <div className="space-y-2 border-t border-border pt-4">
             <p className="text-xs font-medium text-muted-foreground">Or sign in with credentials</p>
-            <form onSubmit={handleDemoEmail} className="flex flex-wrap items-center gap-2">
-              <Input
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email"
-                type="email"
-                className="min-w-[120px] flex-1"
-                required
-              />
-              <Input
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Password"
-                type={showPw ? 'text' : 'password'}
-                className="w-32"
-                required
-              />
+            <form onSubmit={handleSubmit(onSubmit)} className="flex flex-wrap items-center gap-2" noValidate>
+              <Input className="min-w-[120px] flex-1" placeholder="Email" type="email" {...register('email')} aria-invalid={!!errors.email} />
+              <div className="relative w-32">
+                <Input
+                  placeholder="Password"
+                  type={showPw ? 'text' : 'password'}
+                  className="w-32 pr-8"
+                  {...register('password')}
+                  aria-invalid={!!errors.password}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPw((v) => !v)}
+                  aria-label={showPw ? 'Hide password' : 'Show password'}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
+                >
+                  {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
               <Button type="submit" className="shrink-0">Sign in</Button>
-              <button type="button" onClick={() => setShowPw((v) => !v)} className="self-center text-muted-foreground hover:text-foreground cursor-pointer">
-                {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
             </form>
             {(errors.email || errors.password) && (
               <div className="mt-2 space-y-1">
-                {errors.email && <p className="text-xs font-medium text-destructive">{errors.email}</p>}
-                {errors.password && <p className="text-xs font-medium text-destructive">{errors.password}</p>}
+                {errors.email && <p className="text-xs font-medium text-destructive">{errors.email.message}</p>}
+                {errors.password && <p className="text-xs font-medium text-destructive">{errors.password.message}</p>}
               </div>
             )}
           </div>

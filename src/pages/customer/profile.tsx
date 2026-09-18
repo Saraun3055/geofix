@@ -1,16 +1,27 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { UserRound, Phone, Mail, MapPin, ArrowUpRight, Package, CheckCircle2, Clock3 } from 'lucide-react'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
+import { UserRound, Phone, Mail, MapPin, ArrowUpRight, Package, CheckCircle2, Clock3, Pencil, Loader2, X } from 'lucide-react'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { StatusBadge } from '@/components/status-badge'
 import { CategoryIcon } from '@/components/category-icon'
 import { useAuthStore } from '@/stores/auth'
 import { useMyRequests } from '@/hooks/use-requests'
+import { updateMyProfile } from '@/services/profile.service'
+import { toastError, toastSuccess } from '@/hooks/use-toast'
 
 export default function CustomerProfile() {
   const uid = useAuthStore((s) => s.uid)
   const name = useAuthStore((s) => s.name) ?? 'Customer'
   const email = useAuthStore((s) => s.email)
   const phone = useAuthStore((s) => s.phone)
+
+  const [editing, setEditing] = useState(false)
+  const [nameInput, setNameInput] = useState(name)
+  const [phoneInput, setPhoneInput] = useState(phone ?? '')
+  const [saving, setSaving] = useState(false)
 
   const { data: requests = [], isLoading } = useMyRequests(uid)
 
@@ -33,6 +44,28 @@ export default function CustomerProfile() {
     { label: 'Completed', value: completed.length, icon: CheckCircle2 },
   ]
 
+  function startEditing() {
+    setNameInput(name)
+    setPhoneInput(phone ?? '')
+    setEditing(true)
+  }
+
+  async function save() {
+    if (!nameInput.trim()) {
+      toastError('Name required', 'Your display name can’t be empty.')
+      return
+    }
+    setSaving(true)
+    const ok = await updateMyProfile({ name: nameInput, phone: phoneInput })
+    setSaving(false)
+    if (ok) {
+      toastSuccess('Profile updated', 'Your profile details have been saved.')
+      setEditing(false)
+    } else {
+      toastError('Save failed', 'Please try again in a moment.')
+    }
+  }
+
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <Card>
@@ -48,16 +81,48 @@ export default function CustomerProfile() {
           </CardTitle>
         </CardHeader>
         <CardContent className="grid gap-3 text-sm sm:grid-cols-2">
-          <span className="flex items-center gap-2 text-muted-foreground">
-            <Mail className="h-4 w-4" /> {email ?? '—'}
-          </span>
-          <span className="flex items-center gap-2 text-muted-foreground">
-            <Phone className="h-4 w-4" /> {phone ?? '—'}
-          </span>
-          <span className="flex items-center gap-2 text-muted-foreground">
-            <MapPin className="h-4 w-4" /> Location shared per request
-          </span>
+          {!editing ? (
+            <>
+              <span className="flex items-center gap-2 text-muted-foreground">
+                <Mail className="h-4 w-4" /> {email ?? '—'}
+              </span>
+              <span className="flex items-center gap-2 text-muted-foreground">
+                <Phone className="h-4 w-4" /> {phone ?? '—'}
+              </span>
+              <span className="flex items-center gap-2 text-muted-foreground">
+                <MapPin className="h-4 w-4" /> Location shared per request
+              </span>
+            </>
+          ) : (
+            <div className="col-span-full grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="name">Full name</Label>
+                <Input id="name" value={nameInput} onChange={(e) => setNameInput(e.target.value)} className="h-10" />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="phone">Phone</Label>
+                <Input id="phone" value={phoneInput} onChange={(e) => setPhoneInput(e.target.value)} placeholder="+91…" className="h-10" />
+              </div>
+            </div>
+          )}
         </CardContent>
+        <CardFooter className="justify-end">
+          {!editing ? (
+            <Button variant="outline" size="sm" onClick={startEditing} className="gap-1.5">
+              <Pencil className="h-3.5 w-3.5" /> Edit profile
+            </Button>
+          ) : (
+            <div className="flex gap-2">
+              <Button variant="ghost" size="sm" onClick={() => setEditing(false)} className="gap-1.5">
+                <X className="h-3.5 w-3.5" /> Cancel
+              </Button>
+              <Button size="sm" onClick={save} disabled={saving} className="gap-1.5">
+                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Pencil className="h-3.5 w-3.5" />}
+                {saving ? 'Saving…' : 'Save changes'}
+              </Button>
+            </div>
+          )}
+        </CardFooter>
       </Card>
 
       <div className="grid gap-4 sm:grid-cols-3">

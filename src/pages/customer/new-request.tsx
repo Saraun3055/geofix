@@ -4,8 +4,8 @@ import {
   Camera,
   MapPin,
   X,
-  FileText,
   ArrowRight,
+  Star,
 } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth'
 import { useCurrentLocation, DEFAULT_LOCATION } from '@/hooks/use-geo'
@@ -135,9 +135,9 @@ export default function CustomerNewRequest() {
                   type="button"
                   onClick={() => chooseSubcategory(sub)}
                   className={cn(
-                    'rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors cursor-pointer',
+                    'rounded-full border px-3.5 py-1.5 text-sm font-medium transition-all duration-200 hover:scale-[1.05] hover:shadow-sm active:scale-[0.97] cursor-pointer',
                     activeSub === sub
-                      ? 'border-primary bg-primary/10 text-primary'
+                      ? 'border-primary/60 bg-primary/10 text-primary shadow-[0_0_0_3px] shadow-primary/10'
                       : 'border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground',
                   )}
                 >
@@ -176,7 +176,7 @@ export default function CustomerNewRequest() {
           <p className="text-xs text-muted-foreground">Add a photo of the problem so the worker knows what to expect.</p>
           <label
             className={cn(
-              'flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-muted/40 px-4 py-6 text-sm text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary',
+              'flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-muted/40 px-4 py-6 text-sm text-muted-foreground transition-all duration-200 hover:border-primary/50 hover:bg-primary/[0.03] hover:text-primary hover:shadow-[0_0_0_4px] hover:shadow-primary/5 active:scale-[0.99]',
             )}
           >
             <Camera className="h-5 w-5" />
@@ -249,10 +249,15 @@ export default function CustomerNewRequest() {
           <Button variant="ghost" type="button" onClick={() => navigate('/customer/dashboard')}>
             Cancel
           </Button>
-          <Button type="submit" disabled={busy} className="gap-2 px-6" size="lg">
-            {busy ? <Spinner size={18} /> : <FileText className="h-4 w-4" />}
-            {busy ? 'Submitting…' : 'Find nearby workers'}
-            {!busy && <ArrowRight className="h-4 w-4" />}
+          <Button
+            type="submit"
+            disabled={busy}
+            className="group gap-2 px-6 btn-shine"
+            size="lg"
+          >
+            {busy ? <Spinner size={18} /> : <Star className="h-4 w-4 fill-amber-300 text-amber-300 drop-shadow-[0_1px_4px_rgba(242,162,60,0.55)]" />}
+            {busy ? 'Submitting…' : 'Find workers based on rating'}
+            {!busy && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />}
           </Button>
         </div>
       </form>

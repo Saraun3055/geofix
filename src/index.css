@@ -141,6 +141,23 @@
   ::selection {
     background-color: color-mix(in oklab, var(--primary) 22%, transparent);
   }
+  
+  /* Warm scrollbars that respect each portal's palette */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--muted);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: color-mix(in oklab, var(--muted-foreground) 38%, var(--border));
+    border: 2px solid var(--background);
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in oklab, var(--muted-foreground) 58%, var(--border));
+  }
 }
 
 /* ------------------------------------------------------------------ */
@@ -178,14 +195,114 @@
   }
 
   .paper-card-hover {
-    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+    transition:
+      transform 250ms cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 250ms cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 250ms ease;
   }
   .paper-card-hover:hover {
-    transform: translateY(-2px);
-    border-color: color-mix(in oklab, var(--primary) 35%, var(--border));
+    transform: translateY(-4px) scale(1.01);
+    border-color: color-mix(in oklab, var(--primary) 45%, var(--border));
     box-shadow:
       0 1px 0 0 color-mix(in oklab, white 70%, transparent) inset,
-      0 18px 34px -20px rgb(40 25 12 / 0.4);
+      0 14px 30px -10px color-mix(in oklab, var(--primary) 22%, transparent);
+  }
+
+  /* Translucent frosted card for floating chips / overlays */
+  .paper-card-glass {
+    background: color-mix(in oklab, var(--card) 80%, transparent);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid color-mix(in oklab, var(--border) 75%, transparent);
+    border-radius: var(--radius-xl);
+    box-shadow:
+      0 1px 0 0 color-mix(in oklab, white 60%, transparent) inset,
+      0 16px 32px -20px rgb(40 25 12 / 0.45);
+  }
+
+  /* Soft colored halos — primary terracotta vs amber gold */
+  .glow-primary {
+    box-shadow:
+      0 0 0 1px color-mix(in oklab, var(--primary) 25%, transparent),
+      0 12px 32px -14px color-mix(in oklab, var(--primary) 42%, transparent);
+  }
+  .glow-amber {
+    box-shadow:
+      0 0 0 1px color-mix(in oklab, var(--accent) 32%, transparent),
+      0 12px 32px -14px color-mix(in oklab, var(--accent) 48%, transparent);
+  }
+
+  /* Gold gradient text for "top rated" emphasis */
+  .text-gradient-gold {
+    background-image: linear-gradient(115deg, #e0a33d 0%, #f5c34a 45%, #b86f0e 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Animated conic ring highlight for standout cards / CTAs */
+  .gradient-ring {
+    position: relative;
+  }
+  .gradient-ring::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1.5px;
+    background: linear-gradient(
+      120deg,
+      color-mix(in oklab, var(--primary) 55%, transparent),
+      color-mix(in oklab, var(--accent) 75%, transparent),
+      color-mix(in oklab, var(--primary) 55%, transparent)
+    );
+    background-size: 220% 220%;
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    animation: geofix-border-pan 5s linear infinite;
+  }
+
+  /* Moving sheen across primary CTA buttons */
+  .btn-shine {
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-shine::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(
+      110deg,
+      transparent 25%,
+      color-mix(in oklab, white 32%, transparent) 50%,
+      transparent 75%
+    );
+    background-size: 250% 100%;
+    animation: geofix-btn-shine 3.2s linear infinite;
+    pointer-events: none;
+  }
+
+  /* Skeleton loading placeholder with shimmer sweep */
+  .skeleton-shimmer {
+    position: relative;
+    overflow: hidden;
+    background: var(--muted);
+  }
+  .skeleton-shimmer::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, color-mix(in oklab, white 50%, transparent), transparent);
+    animation: geofix-shimmer 1.5s infinite;
   }
 
   /* Radial "pin" used for map markers + connectors */
@@ -211,6 +328,52 @@
   .animate-list-in {
     animation: geofix-in 380ms cubic-bezier(0.21, 1.02, 0.73, 1) both;
   }
+
+  /* Fade + rise — hero and section entrances */
+  .animate-fade-in-up {
+    animation: geofix-fade-in-up 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  /* Soft breathing pulse — live badges, presence dots, handoff chips */
+  .animate-pulse-soft {
+    animation: geofix-pulse-soft 2.6s ease-in-out infinite;
+  }
+
+  /* Scale + fade — card reveals with stagger */
+  .animate-scale-in {
+    animation: geofix-scale-in 440ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  /* Interactive hover lift for clickable cards/rows */
+  .hover-lift {
+    transition: transform 180ms ease, box-shadow 180ms ease;
+  }
+  .hover-lift:hover {
+    transform: translateY(-2px) scale(1.02);
+  }
+
+  /* Gentle ambient float — decorative chips, hero badges */
+  .animate-float {
+    animation: geofix-float 6s ease-in-out infinite;
+  }
+  .animate-float-slow {
+    animation: geofix-float 9s ease-in-out infinite;
+  }
+
+  /* Breathing radial glow — live status avatars, location markers */
+  .animate-pulse-glow {
+    animation: geofix-pulse-glow 2.2s ease-in-out infinite;
+  }
+
+  /* Cascading entrance — worker cards, feeds, stat tiles */
+  .animate-stagger-in {
+    animation: geofix-fade-in-up 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  /* Playful attention bounce — badges, verified ticks */
+  .animate-badge-bounce {
+    animation: geofix-badge-bounce 2.4s ease-in-out infinite;
+  }
 }
 
 @keyframes geofix-in {
@@ -221,5 +384,93 @@
   to {
     opacity: 1;
     transform: none;
+  }
+}
+
+@keyframes geofix-fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes geofix-pulse-soft {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.55;
+    transform: scale(1.06);
+  }
+}
+
+@keyframes geofix-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes geofix-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes geofix-pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, white 55%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 12px color-mix(in oklab, white 0%, transparent);
+  }
+}
+
+@keyframes geofix-badge-bounce {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.07);
+  }
+}
+
+@keyframes geofix-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes geofix-btn-shine {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -50% 0;
+  }
+}
+
+@keyframes geofix-border-pan {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
   }
 }

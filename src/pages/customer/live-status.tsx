@@ -27,6 +27,16 @@ import { CategoryIcon } from '@/components/category-icon'
 import type { RequestStatus, PaymentMethod } from '@/lib/types'
 import { cancelRequest, payForRequest } from '@/services/requests.service'
 import { toastError, toastSuccess } from '@/hooks/use-toast'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { cn } from '@/lib/utils'
 
 const TIMELINE_STEPS: { key: RequestStatus; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
@@ -97,6 +107,8 @@ export default function CustomerLiveStatus() {
   const navigate = useNavigate()
   const [method, setMethod] = useState<PaymentMethod>('cash')
   const [paying, setPaying] = useState(false)
+  const [cancelOpen, setCancelOpen] = useState(false)
+  const [cancelling, setCancelling] = useState(false)
 
   const { data: request, isLoading } = useRequestLive(id)
   const status = request?.status
@@ -112,6 +124,19 @@ export default function CustomerLiveStatus() {
       toastSuccess('Payment received', `Bill paid via ${method.toUpperCase()}. You can now rate the worker.`)
     } else {
       toastError('Payment failed', 'We could not confirm your payment. Please try again.')
+    }
+  }
+
+  async function handleCancel() {
+    if (!request || cancelling) return
+    setCancelling(true)
+    const ok = await cancelRequest(request.id)
+    setCancelling(false)
+    setCancelOpen(false)
+    if (ok) {
+      toastSuccess('Booking cancelled', 'The worker has been notified and your request is now closed.')
+    } else {
+      toastError('Cancel failed', 'We could not cancel this booking. Please try again.')
     }
   }
 
@@ -171,6 +196,10 @@ export default function CustomerLiveStatus() {
       <div className="paper-card p-5">
         <div className="relative flex items-start justify-between">
           <div className="absolute top-3 left-0 right-0 h-0.5 bg-border" />
+          <div
+            className="absolute top-3 left-0 h-0.5 bg-primary shadow-[0_0_8px] shadow-primary/50 transition-all duration-700 ease-out"
+            style={{ width: `${Math.min(100, (activeIdx / (TIMELINE_STEPS.length - 1)) * 100)}%` }}
+          />
           {TIMELINE_STEPS.map((step, i) => {
             const reached = i <= activeIdx && activeIdx >= 0
             const isCurrent = i === activeIdx
@@ -179,11 +208,11 @@ export default function CustomerLiveStatus() {
               <div key={step.key} className="relative z-10 flex flex-col items-center gap-2">
                 <span
                   className={cn(
-                    'flex h-7 w-7 items-center justify-center rounded-full border-2 transition-all',
+                    'flex h-7 w-7 items-center justify-center rounded-full border-2 transition-all duration-300',
                     reached
                       ? 'border-primary bg-primary text-primary-foreground'
                       : isCurrent
-                        ? 'border-primary bg-primary text-primary-foreground ring-4 ring-primary/20'
+                        ? 'border-primary bg-primary text-primary-foreground ring-4 ring-primary/20 animate-pulse-glow'
                         : 'border-border bg-background text-muted-foreground',
                   )}
                 >
@@ -197,7 +226,7 @@ export default function CustomerLiveStatus() {
           })}
           {status === 'cancelled' && (
             <div className="relative z-10 flex flex-col items-center gap-2">
-              <span className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-destructive bg-destructive text-destructive-foreground">
+              <span className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-destructive bg-destructive text-destructive-foreground shadow-[0_0_10px] shadow-destructive/40">
                 <X className="h-3.5 w-3.5" />
               </span>
               <span className="text-[11px] font-medium text-destructive">Cancelled</span>
@@ -215,6 +244,12 @@ export default function CustomerLiveStatus() {
           <Button className="mt-3 gap-2" onClick={() => navigate('/customer/new/workers?request=' + request.id)}>
             Browse next worker <ArrowRight className="h-4 w-4" />
           </Button>
+          <button
+            onClick={() => setCancelOpen(true)}
+            className="mt-3 text-xs font-medium text-muted-foreground hover:text-destructive cursor-pointer"
+          >
+            Cancel request instead
+          </button>
         </div>
       )}
 
@@ -230,9 +265,9 @@ export default function CustomerLiveStatus() {
           </p>
           <div className="flex flex-wrap items-center justify-center gap-2">
             <Button className="gap-2" onClick={() => navigate(`/customer/new/workers?request=${request.id}`)}>
-              Browse nearby workers <ArrowRight className="h-4 w-4" />
+              Find workers based on rating <ArrowRight className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => cancelRequest(request.id)}>
+            <Button variant="ghost" size="sm" onClick={() => setCancelOpen(true)}>
               Cancel request
             </Button>
           </div>
@@ -248,6 +283,9 @@ export default function CustomerLiveStatus() {
           <p className="max-w-sm text-sm text-muted-foreground">
             Waiting for them to accept or decline. Your screen updates live — no refresh needed.
           </p>
+          <Button variant="ghost" size="sm" onClick={() => setCancelOpen(true)}>
+            Cancel booking
+          </Button>
         </div>
       )}
 
@@ -256,16 +294,16 @@ export default function CustomerLiveStatus() {
         <div className="space-y-5 animate-in">
           <div
             className={cn(
-              'rounded-xl border px-6 py-5 text-center',
-              status === 'accepted' && 'border-emerald-200 bg-emerald-50',
-              status === 'on_the_way' && 'border-sky-200 bg-sky-50',
-              status === 'arrived' && 'border-indigo-200 bg-indigo-50',
-              status === 'in_progress' && 'border-amber-200 bg-amber-50',
+              'rounded-xl border px-6 py-5 text-center shadow-[0_16px_40px_-24px_rgba(0,0,0,0.35)]',
+              status === 'accepted' && 'border-emerald-200 bg-emerald-50 shadow-emerald-500/20',
+              status === 'on_the_way' && 'border-sky-200 bg-sky-50 shadow-sky-500/20',
+              status === 'arrived' && 'border-indigo-200 bg-indigo-50 shadow-indigo-500/20',
+              status === 'in_progress' && 'border-amber-200 bg-amber-50 shadow-amber-500/25',
             )}
           >
             <div
               className={cn(
-                'mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full',
+                'mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full animate-pulse-glow',
                 status === 'accepted' && 'bg-emerald-200 text-emerald-800',
                 status === 'on_the_way' && 'bg-sky-200 text-sky-800',
                 status === 'arrived' && 'bg-indigo-200 text-indigo-800',
@@ -322,6 +360,13 @@ export default function CustomerLiveStatus() {
               Once the job is done, <strong>{request.workerName}</strong> will send you a bill to review here.
             </p>
           </div>
+
+          <button
+            onClick={() => setCancelOpen(true)}
+            className="mx-auto flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-destructive cursor-pointer"
+          >
+            <X className="h-3.5 w-3.5" /> Cancel this booking
+          </button>
         </div>
       )}
 
@@ -448,6 +493,28 @@ export default function CustomerLiveStatus() {
           you’ll see it here instantly.
         </p>
       </div>
+
+      <AlertDialog open={cancelOpen} onOpenChange={setCancelOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel this booking?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {request && request.title ? <>“{request.title}”</> : <>Your request</>} will be cancelled and the worker
+              will be notified. This can’t be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={cancelling}>Keep booking</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={handleCancel}
+              disabled={cancelling}
+            >
+              {cancelling ? 'Cancelling…' : 'Yes, cancel booking'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

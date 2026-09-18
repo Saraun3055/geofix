@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { ShieldCheck, Loader2, Search, ArrowLeft, UserRound, ArrowRight, WifiOff, Star, MapPin, Zap } from 'lucide-react'
+import { Star, Loader2, Search, ArrowLeft, UserRound, ArrowRight, WifiOff, ShieldCheck, MapPin, Zap } from 'lucide-react'
 import { useAllWorkers } from '@/hooks/use-workers'
 import { useMyRequests } from '@/hooks/use-requests'
 import { useAuthStore } from '@/stores/auth'
@@ -8,12 +8,26 @@ import { requestWorker } from '@/services/requests.service'
 import { Stars } from '@/components/stars'
 import { StatusBadge } from '@/components/status-badge'
 import { Button } from '@/components/ui/button'
-import { Spinner } from '@/components/ui/spinner'
 import { CategoryIcon } from '@/components/category-icon'
 
 import { toastError, toastSuccess } from '@/hooks/use-toast'
 import { haversine } from '@/lib/geo'
+import { cn } from '@/lib/utils'
 import type { WorkerProfileDoc } from '@/lib/types'
+
+const SORTS = [
+  ['rating', Star, 'Rating'],
+  ['nearby', MapPin, 'Nearby'],
+  ['fast', Zap, 'Fastest'],
+] as const
+
+function TopRatedBadge() {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 px-2 py-0.5 text-[11px] font-bold text-amber-950 shadow-[0_2px_8px_-2px_rgba(245,158,11,0.6)] animate-badge-bounce">
+      <Star className="h-3 w-3 fill-amber-950 text-amber-950" /> Top Rated
+    </span>
+  )
+}
 
 export default function CustomerWorkers() {
   const navigate = useNavigate()
@@ -80,9 +94,9 @@ export default function CustomerWorkers() {
       <div className="flex items-start justify-between gap-3">
         <div>
           <span className="eyebrow">Choose a worker</span>
-          <h1 className="mt-1 font-display text-2xl font-bold tracking-tight">Best-rated professionals</h1>
+          <h1 className="mt-1 font-display text-2xl font-bold tracking-tight">Find workers based on rating</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Pick the professional you want — they get a live alert to accept or decline.
+            Top-rated professionals for {request.title} — tap one and they get a live alert to accept or decline.
           </p>
         </div>
         <div className="flex gap-2">
@@ -98,9 +112,22 @@ export default function CustomerWorkers() {
       </div>
 
       {isLoading ? (
-        <div className="flex flex-col items-center gap-3 py-20">
-          <Spinner size={28} className="text-primary" />
-          <p className="text-sm text-muted-foreground">Loading workers…</p>
+        <div className="space-y-3 py-6">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div
+              key={i}
+              className="flex items-center justify-between gap-4 rounded-xl border border-border bg-card p-4"
+            >
+              <div className="flex items-center gap-4">
+                <div className="skeleton-shimmer h-12 w-12 rounded-full" />
+                <div className="space-y-2">
+                  <div className="skeleton-shimmer h-4 w-40 rounded-md" />
+                  <div className="skeleton-shimmer h-3 w-24 rounded-md" />
+                </div>
+              </div>
+              <div className="skeleton-shimmer h-9 w-24 rounded-lg" />
+            </div>
+          ))}
         </div>
       ) : error ? (
         <div className="paper-card flex flex-col items-center gap-3 px-6 py-16 text-center">
@@ -131,25 +158,28 @@ export default function CustomerWorkers() {
                   ? 'fastest response time'
                   : 'sorted by rating'}
             </p>
-            <div className="flex items-center gap-1 rounded-lg border border-border bg-muted/60 p-0.5">
-              {(
-                [
-                  ['rating', Star, 'Rating'],
-                  ['nearby', MapPin, 'Nearby'],
-                  ['fast', Zap, 'Fastest'],
-                ] as const
-              ).map(([key, Icon, label]) => (
+            <div className="relative flex items-center rounded-lg border border-border bg-muted/60 p-0.5">
+              <span
+                aria-hidden
+                className="absolute bottom-0.5 left-0.5 top-0.5 rounded-md bg-background shadow-sm transition-transform duration-300 ease-out"
+                style={{
+                  width: 'calc((100% - 4px) / 3)',
+                  transform: `translateX(${SORTS.findIndex(([k]) => k === sortBy) * 100}%)`,
+                }}
+              />
+              {SORTS.map(([key, Icon, label]) => (
                 <button
                   key={key}
                   type="button"
                   onClick={() => setSortBy(key)}
-                  className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors ${
-                    sortBy === key
-                      ? 'bg-background text-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground'
+                  className={`relative z-10 inline-flex flex-1 items-center justify-center gap-1.5 rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors cursor-pointer ${
+                    sortBy === key ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
-                  <Icon className="h-3 w-3" /> {label}
+                  <Icon
+                    className={`h-3 w-3 ${sortBy === key ? 'text-primary' : ''}`}
+                  />
+                  {label}
                 </button>
               ))}
             </div>
@@ -158,16 +188,23 @@ export default function CustomerWorkers() {
           {workers.map((worker, i) => (
             <div
               key={worker.userId}
-              className="paper-card paper-card-hover flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between animate-list-in"
-              style={{ animationDelay: `${i * 50}ms` }}
+              className={cn(
+                'paper-card paper-card-hover flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between animate-stagger-in',
+                worker.rating >= 4.8 && 'glow-amber',
+              )}
+              style={{ animationDelay: `${i * 55}ms` }}
             >
               <div className="flex items-start gap-4">
-                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-secondary text-secondary-foreground">
+                <span className={cn(
+                  'flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-secondary text-secondary-foreground',
+                  worker.rating >= 4.8 && 'ring-2 ring-amber-300/70 animate-pulse-glow',
+                )}>
                   <span className="text-sm font-semibold">{worker.name.split(' ').map((p) => p[0]).join('')}</span>
                 </span>
                 <div className="min-w-0">
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <h3 className="font-display text-base font-semibold">{worker.name}</h3>
+                    {worker.rating >= 4.8 && <TopRatedBadge />}
                     {worker.verificationStatus === 'approved' && (
                       <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
                         <ShieldCheck className="h-3 w-3" /> Verified
@@ -180,7 +217,8 @@ export default function CustomerWorkers() {
                   </p>
                   <div className="mt-1.5 flex flex-wrap items-center gap-3 text-sm">
                     <span className="flex items-center gap-1.5 font-semibold">
-                      <Stars value={worker.rating} size={14} /> {worker.rating.toFixed(1)}
+                      <Stars value={worker.rating} size={14} />
+                      <span className={worker.rating >= 4.8 ? 'text-gradient-gold' : ''}>{worker.rating.toFixed(1)}</span>
                       <span className="text-xs text-muted-foreground">({worker.ratingCount})</span>
                     </span>
                     {worker.avgResponseMin !== undefined && (
@@ -208,14 +246,14 @@ export default function CustomerWorkers() {
               </div>
 
               <Button
-                className="shrink-0 gap-2 px-5 sm:self-center"
+                className="group shrink-0 gap-2 px-5 sm:self-center"
                 disabled={busyWorker !== null}
                 onClick={() => handleRequestWorker(worker)}
               >
                 {busyWorker === worker.userId ? (
                   <span className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Requesting…</span>
                 ) : (
-                  <>Request <ArrowRight className="h-4 w-4" /></>
+                  <>Request <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" /></>
                 )}
               </Button>
             </div>

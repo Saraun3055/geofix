@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { UserRound, MapPin, Star, Inbox, ArrowUpRight, Loader2, Plus, X } from 'lucide-react'
+import { UserRound, MapPin, Star, Inbox, ArrowUpRight, Loader2, Plus, X, Pencil, Phone } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -12,6 +12,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useWorkerProfile } from '@/hooks/use-workers'
 import { useWorkerIncoming } from '@/hooks/use-requests'
 import { updateWorkerProfile } from '@/services/workers.service'
+import { updateMyProfile } from '@/services/profile.service'
 import { toastSuccess, toastError } from '@/hooks/use-toast'
 import { CATEGORY_LIST, type AvailabilitySlot } from '@/lib/types'
 import { cn } from '@/lib/utils'
@@ -31,10 +32,13 @@ function slotLabel(s: AvailabilitySlot) {
 export default function WorkerProfile() {
   const uid = useAuthStore((s) => s.uid)
   const name = useAuthStore((s) => s.name) ?? 'Worker'
+  const phone = useAuthStore((s) => s.phone)
   const { data: profile, isLoading: profileLoading } = useWorkerProfile(uid)
   const { data: incoming = [], isLoading: incomingLoading } = useWorkerIncoming(uid)
 
   const [editing, setEditing] = useState(false)
+  const [nameInput, setNameInput] = useState(name)
+  const [phoneInput, setPhoneInput] = useState(phone ?? '')
   const [skills, setSkills] = useState<string[]>([])
   const [slots, setSlots] = useState<AvailabilitySlot[]>([])
   const [newDay, setNewDay] = useState('Mon')
@@ -50,13 +54,23 @@ export default function WorkerProfile() {
     }
   }, [profile?.userId, editing])
 
-  const initials = (profile?.name ?? name)
+  const initials = name
     .split(/\s+/)
     .map((w) => w[0])
     .filter(Boolean)
     .slice(0, 2)
     .join('')
     .toUpperCase()
+
+  function startEditing() {
+    setNameInput(name)
+    setPhoneInput(phone ?? '')
+    if (profile) {
+      setSkills([...(profile.categorySkills ?? [])])
+      setSlots([...(profile.availableSlots ?? [])])
+    }
+    setEditing(true)
+  }
 
   function toggleSkill(s: string) {
     setSkills((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]))
@@ -79,10 +93,13 @@ export default function WorkerProfile() {
       return
     }
     setSaving(true)
-    const ok = await updateWorkerProfile(uid, { categorySkills: skills, availableSlots: slots })
+    const [detailsOk, profileOk] = await Promise.all([
+      updateMyProfile({ name: nameInput, phone: phoneInput }),
+      updateWorkerProfile(uid, { categorySkills: skills, availableSlots: slots }),
+    ])
     setSaving(false)
-    if (ok) {
-      toastSuccess('Profile saved', 'Skills and availability updated.')
+    if (detailsOk && profileOk) {
+      toastSuccess('Profile saved', 'Your details, skills and availability were updated.')
       setEditing(false)
     } else {
       toastError('Save failed', 'Please try again.')
@@ -98,7 +115,7 @@ export default function WorkerProfile() {
               {initials || <UserRound className="h-8 w-8" />}
             </div>
             <div>
-              <div className="truncate text-2xl font-semibold">{profile?.name ?? name}</div>
+              <div className="truncate text-2xl font-semibold">{name}</div>
               <CardDescription>
                 {profile?.isOnline ? 'Online · available for jobs' : 'Offline'}
                 {profile?.verificationStatus
@@ -151,6 +168,19 @@ export default function WorkerProfile() {
             </div>
           ) : (
             <div className="space-y-5">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label htmlFor="worker-name">Full name</Label>
+                  <Input id="worker-name" value={nameInput} onChange={(e) => setNameInput(e.target.value)} className="h-10" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="worker-phone" className="flex items-center gap-1.5">
+                    <Phone className="h-3.5 w-3.5" /> Phone
+                  </Label>
+                  <Input id="worker-phone" value={phoneInput} onChange={(e) => setPhoneInput(e.target.value)} placeholder="+91…" className="h-10" />
+                </div>
+              </div>
+
               <div className="space-y-2">
                 <Label>Skills</Label>
                 <div className="flex flex-wrap gap-2">
@@ -223,10 +253,12 @@ export default function WorkerProfile() {
         </CardContent>
         <CardFooter>
           {!editing ? (
-            <Button variant="outline" size="sm" onClick={() => setEditing(true)}>Edit profile</Button>
+            <Button variant="outline" size="sm" onClick={startEditing} className="gap-1.5">
+              <Pencil className="h-3.5 w-3.5" /> Edit profile
+            </Button>
           ) : (
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => { setEditing(false); if (profile) { setSkills([...profile.categorySkills]); setSlots([...profile.availableSlots ?? []]) } }}>Cancel</Button>
+              <Button variant="outline" size="sm" onClick={() => { setEditing(false); setNameInput(name); setPhoneInput(phone ?? ''); if (profile) { setSkills([...profile.categorySkills]); setSlots([...profile.availableSlots ?? []]) } }}>Cancel</Button>
               <Button size="sm" onClick={save} disabled={saving}>
                 {saving ? <><Loader2 className="h-4 w-4 animate-spin" /> Saving…</> : 'Save changes'}
               </Button>

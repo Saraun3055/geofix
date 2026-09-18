@@ -77,7 +77,7 @@ export function AppShell({
               )
             }
           >
-            <item.icon className="h-[18px] w-[18px] stroke-[1.7]" />
+            <item.icon className="h-[18px] w-[18px] stroke-[1.7] transition-transform duration-200 group-hover:scale-110" />
             <span className="flex-1">{item.label}</span>
             {item.badge ? (
               <span
@@ -111,7 +111,7 @@ export function AppShell({
                   )
                 }
               >
-                <item.icon className="h-[18px] w-[18px] stroke-[1.7]" />
+                <item.icon className="h-[18px] w-[18px] stroke-[1.7] transition-transform duration-200 group-hover:scale-110" />
                 <span className="flex-1">{item.label}</span>
               </NavLink>
             ))}
@@ -120,7 +120,7 @@ export function AppShell({
       </nav>
 
       <div className="p-3">
-        <div className="flex items-center gap-3 rounded-xl bg-sidebar-accent/70 px-3 py-2.5">
+        <div className="flex items-center gap-3 rounded-xl bg-sidebar-accent/70 px-3 py-2.5 transition-all duration-200 hover:scale-[1.01] hover:bg-sidebar-accent">
           <Avatar className="h-9 w-9 border border-sidebar-border">
             <AvatarFallback className="bg-sidebar-primary/20 text-sidebar-foreground">{initials}</AvatarFallback>
           </Avatar>
@@ -171,7 +171,7 @@ export function AppShell({
       {/* Main column */}
       <div className="flex min-w-0 flex-1 flex-col lg:pl-64">
         <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-border/70 bg-background/85 px-4 backdrop-blur lg:hidden">
-          <button onClick={() => setMobileOpen(true)} className="rounded-lg p-2 hover:bg-muted cursor-pointer" aria-label="Open menu">
+          <button onClick={() => setMobileOpen(true)} className="rounded-lg p-2 transition-transform hover:bg-muted active:scale-95 cursor-pointer" aria-label="Open menu">
             <Menu className="h-5 w-5" />
           </button>
           <LogoFull size={26} className="text-foreground" textClassName="text-base" />

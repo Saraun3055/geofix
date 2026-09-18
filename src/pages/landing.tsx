@@ -26,7 +26,7 @@ const steps = [
   {
     icon: Star,
     title: 'Pick the best-rated pro',
-    body: 'We show nearby workers sorted by rating — you choose who to request, then hear back in real time.',
+    body: 'We find workers based on rating, not just proximity — you choose who to request, then hear back in real time.',
   },
   {
     icon: Wrench,
@@ -76,15 +76,16 @@ function Hero() {
             <Sparkles className="h-3.5 w-3.5" /> Madurai's #1 Local Service Network
           </span>
           <h1 className="mt-5 font-display text-4xl font-bold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
-            Madurai's Top-Rated <span className="text-primary">Repair Experts. Right Nearby.</span>
+            Hire the best-rated repair experts in <span className="text-primary">Madurai.</span>
           </h1>
           <p className="mt-5 max-w-xl text-lg leading-relaxed text-muted-foreground">
-            Top-rated plumbers, electricians & technicians across Madurai. Instant WhatsApp connect.
+            We rank workers based on rating, not just proximity — verified plumbers, electricians & technicians,
+            instantly connected on WhatsApp.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
-            <Button size="lg" className="gap-2" asChild>
+            <Button size="lg" className="group btn-shine gap-2" asChild>
               <Link to="/signup">
-                I need a repair <ArrowRight className="h-4 w-4" />
+                I need a repair <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
               </Link>
             </Button>
             <Button size="lg" variant="outline" className="gap-2" asChild>
@@ -121,7 +122,7 @@ function Hero() {
                   {customerCategories.map((c) => (
                     <div
                       key={c}
-                      className="flex flex-col items-center gap-1.5 rounded-xl border border-border bg-background/60 px-2 py-3 text-center"
+                      className="flex flex-col items-center gap-1.5 rounded-xl border border-border bg-background/60 px-2 py-3 text-center hover-lift cursor-pointer"
                     >
                       <CategoryIcon category={c} className="h-4 w-4 text-primary" />
                       <span className="text-[11px] font-medium leading-tight">{c}</span>
@@ -144,7 +145,7 @@ function Hero() {
                     { n: 'Yusuf Idris', r: 4.8, t: 'Electrical' },
                     { n: 'Miguel Santos', r: 4.7, t: 'Painting' },
                   ].map((w) => (
-                    <div key={w.n} className="flex items-center justify-between rounded-lg border border-border bg-background px-3 py-2">
+                    <div key={w.n} className="flex items-center justify-between rounded-lg border border-border bg-background px-3 py-2 hover-lift">
                       <div>
                         <p className="text-sm font-semibold">{w.n}</p>
                         <p className="text-[11px] text-muted-foreground">{w.t}</p>
@@ -161,7 +162,7 @@ function Hero() {
               </div>
             </div>
           </div>
-          <div className="paper-card absolute -bottom-6 -left-6 z-0 -rotate-3 p-3 opacity-90">
+<div className="paper-card absolute -bottom-6 -left-6 z-0 -rotate-3 p-3 opacity-90">
             <div className="flex items-center gap-3">
               <span className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-600 text-white">
                 <MessageCircle className="h-4 w-4" />
@@ -171,6 +172,26 @@ function Hero() {
                 <p className="text-[11px] text-muted-foreground">Message + map link pre-filled</p>
               </div>
             </div>
+          </div>
+
+          <div className="paper-card-glass absolute -right-5 top-6 z-20 flex items-center gap-2.5 px-3 py-2.5 animate-float">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-yellow-500 text-amber-950 shadow-md">
+              <Star className="h-4 w-4 fill-amber-950" />
+            </span>
+            <div>
+              <p className="text-xs font-bold leading-tight text-foreground">4.9 · Top Rated</p>
+              <p className="text-[10px] text-muted-foreground">Ranked by rating, not distance</p>
+            </div>
+          </div>
+
+          <div className="paper-card-glass absolute -left-16 top-1/3 z-20 hidden items-center gap-2 px-3 py-2 animate-float-slow sm:flex">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
+            </span>
+<p className="font-mono text-[10px] font-semibold uppercase tracking-wide text-foreground/80">
+              6 pros live near you
+            </p>
           </div>
         </div>
       </div>
@@ -194,7 +215,7 @@ function HowItWorks() {
       </div>
       <div className="mt-12 grid gap-6 md:grid-cols-3">
         {steps.map((s, i) => (
-          <div key={s.title} className="paper-card paper-card-hover relative p-6">
+          <div key={s.title} className="paper-card paper-card-hover relative p-6 animate-scale-in" style={{ animationDelay: `${i * 90}ms` }}>
             <span className="stat-number absolute right-5 top-4 text-4xl font-bold text-primary/15">0{i + 1}</span>
             <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-secondary text-primary">
               <s.icon className="h-5 w-5 stroke-[1.6]" />
