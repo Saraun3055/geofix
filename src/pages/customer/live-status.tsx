@@ -194,6 +194,16 @@ export default function CustomerLiveStatus() {
 
       {/* Timeline */}
       <div className="paper-card p-5">
+        <div className="mb-4 flex items-center justify-between">
+          <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+            </span>
+            Live status
+          </p>
+          <span className="text-[11px] text-muted-foreground">updates in real time</span>
+        </div>
         <div className="relative flex items-start justify-between">
           <div className="absolute top-3 left-0 right-0 h-0.5 bg-border" />
           <div
@@ -212,14 +222,23 @@ export default function CustomerLiveStatus() {
                     reached
                       ? 'border-primary bg-primary text-primary-foreground'
                       : isCurrent
-                        ? 'border-primary bg-primary text-primary-foreground ring-4 ring-primary/20 animate-pulse-glow'
+                        ? 'scale-110 border-primary bg-primary text-primary-foreground ring-4 ring-primary/20 shadow-[0_0_14px] shadow-primary/40 animate-pulse-glow'
                         : 'border-border bg-background text-muted-foreground',
                   )}
                 >
                   <Icon className="h-3.5 w-3.5" />
                 </span>
-                <span className={cn('text-[11px] font-medium', reached ? 'text-foreground' : 'text-muted-foreground')}>
+                <span
+                  className={cn(
+                    'text-[11px] font-medium transition-colors',
+                    reached ? 'text-foreground' : 'text-muted-foreground',
+                    isCurrent && 'font-bold text-primary',
+                  )}
+                >
                   {step.label}
+                    {isCurrent && activeIdx > 0 && (
+                      <span className="ml-1 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-primary align-middle" />
+                    )}
                 </span>
               </div>
             )

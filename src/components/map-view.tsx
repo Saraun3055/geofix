@@ -37,17 +37,21 @@ export function MapView({
   zoom = 13,
   height = 320,
   className,
+  activeId,
+  onMarkerSelect,
 }: {
   markers: MapMarker[]
   center: { lat: number; lng: number }
   zoom?: number
   height?: number
   className?: string
+  activeId?: string
+  onMarkerSelect?: (id: string) => void
 }) {
   const hasKey = Boolean(GMAPS_KEY)
 
   if (!hasKey) {
-    return <MockMap markers={markers} center={center} height={height} className={className} />
+    return <MockMap markers={markers} center={center} height={height} className={className} activeId={activeId} onMarkerSelect={onMarkerSelect} />
   }
 
   return (
@@ -58,21 +62,26 @@ export function MapView({
         zoom={zoom}
         options={mapOptions}
       >
-        {markers.map((m) => (
-          <Marker
-            key={m.id}
-            position={{ lat: m.lat, lng: m.lng }}
-            title={m.label}
-            icon={{
-              path: typeof window !== 'undefined' && (window as any).google?.maps?.SymbolPath?.CIRCLE,
-              fillColor: m.color ?? '#b7512e',
-              fillOpacity: 1,
-              strokeColor: '#fff',
-              strokeWeight: 2,
-              scale: 9,
-            }}
-          />
-        ))}
+        {markers.map((m) => {
+          const isActive = m.id === activeId
+          return (
+            <Marker
+              key={m.id}
+              position={{ lat: m.lat, lng: m.lng }}
+              title={m.label}
+              onClick={() => onMarkerSelect?.(m.id)}
+              zIndex={isActive ? 10 : 1}
+              icon={{
+                path: typeof window !== 'undefined' && (window as any).google?.maps?.SymbolPath?.CIRCLE,
+                fillColor: m.color ?? '#b7512e',
+                fillOpacity: 1,
+                strokeColor: isActive ? '#fff' : '#fff',
+                strokeWeight: isActive ? 4 : 2,
+                scale: isActive ? 13 : 9,
+              }}
+            />
+          )
+        })}
       </GoogleMap>
     </div>
   )
@@ -84,11 +93,15 @@ function MockMap({
   center,
   height,
   className,
+  activeId,
+  onMarkerSelect,
 }: {
   markers: MapMarker[]
   center: { lat: number; lng: number }
   height?: number
   className?: string
+  activeId?: string
+  onMarkerSelect?: (id: string) => void
 }) {
   const bounds = useMemo(() => {
     const lats = markers.map((m) => m.lat)
@@ -114,10 +127,23 @@ function MockMap({
         const x = ((m.lng - bounds.minLng) / (bounds.maxLng - bounds.minLng)) * 100
         const y = 100 - ((m.lat - bounds.minLat) / (bounds.maxLat - bounds.minLat)) * 100
         const isWorker = m.kind === 'worker'
+        const isActive = m.id === activeId
         return (
-          <div key={m.id} className="absolute -translate-x-1/2 -translate-y-1/2" style={{ left: `${x}%`, top: `${y}%` }}>
+          <div
+            key={m.id}
+            className={cn(
+              'absolute -translate-x-1/2 -translate-y-1/2',
+              onMarkerSelect && 'cursor-pointer transition-transform duration-200',
+              isActive && 'z-10 scale-125',
+            )}
+            style={{ left: `${x}%`, top: `${y}%` }}
+            onClick={onMarkerSelect ? () => onMarkerSelect(m.id) : undefined}
+          >
             <div
-              className="flex h-7 w-7 items-center justify-center rounded-full text-white shadow-lg ring-4 ring-white/70"
+              className={cn(
+                'flex h-7 w-7 items-center justify-center rounded-full text-white shadow-lg ring-4 transition-all duration-200',
+                isActive ? 'ring-amber-300/90' : 'ring-white/70',
+              )}
               style={{ backgroundColor: m.color ?? (isWorker ? '#2f6f4f' : '#b7512e') }}
             >
               {isWorker ? <CategoryIcon category={m.category ?? ''} className="h-3.5 w-3.5" /> : <MapPin className="h-4 w-4" />}

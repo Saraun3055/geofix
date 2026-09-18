@@ -9,6 +9,8 @@ export const userSchema = new Schema(
     role: { type: String, enum: ['customer', 'worker', 'admin'], default: 'customer' },
     photoUrl: { type: String, default: '' },
     suspended: { type: Boolean, default: false },
+    resetTokenHash: { type: String, default: null },
+    resetTokenExpiresAt: { type: Date, default: null },
     createdAt: { type: Date, default: Date.now },
   },
 )

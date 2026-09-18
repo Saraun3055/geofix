@@ -33,7 +33,7 @@ router.get('/requests', async (req: AuthRequest, res: Response) => {
   }
 })
 
-/** GET /admin/users — every user (customers + workers + admins). */
+/** GET /admin/users — every customer/worker account. Admins live in their own collection. */
 router.get('/users', async (req: AuthRequest, res: Response) => {
   try {
     const users = await User.find().sort({ createdAt: -1 }).lean()
@@ -51,28 +51,40 @@ router.patch('/users/:id/suspend', async (req: AuthRequest, res: Response) => {
       res.status(400).json({ message: 'suspended must be a boolean' })
       return
     }
-    const user = await User.findByIdAndUpdate(req.params.id, { suspended }, { new: true }).lean()
+    if (req.params.id === req.user!.id) {
+      res.status(400).json({ message: 'You cannot suspend or restore your own account' })
+      return
+    }
+    const user = await User.findById(req.params.id)
     if (!user) {
       res.status(404).json({ message: 'User not found' })
       return
     }
+    if (user.role === 'admin') {
+      res.status(400).json({ message: 'Admin accounts are managed separately and cannot be suspended here' })
+      return
+    }
+    user.suspended = suspended
+    await user.save()
     await logAudit({
       actorId: req.user!.id,
       actorRole: req.user!.role,
       action: suspended ? 'suspend_user' : 'restore_user',
       targetId: user._id.toString(),
     })
-    res.json(toSafeUser({ ...user, _id: user._id }))
+res.json(toSafeUser({ ...user.toObject(), _id: user._id }))
   } catch {
     res.status(500).json({ message: 'Something went wrong' })
   }
 })
 
-/** GET /admin/verification-queue?status=[pending|approved|rejected] — default pending. */
+/** GET /admin/verification-queue?status=[pending|approved|rejected|all] — default pending. */
 router.get('/verification-queue', async (req: AuthRequest, res: Response) => {
   try {
     const status = typeof req.query.status === 'string' ? req.query.status : 'pending'
-    const docs = await VerificationQueue.find({ status }).sort({ submittedAt: -1 }).lean()
+    const docs = status === 'all'
+      ? await VerificationQueue.find().sort({ submittedAt: -1 }).lean()
+      : await VerificationQueue.find({ status }).sort({ submittedAt: -1 }).lean()
     res.json(docs.map((d) => toVerificationQueueDoc(d)))
   } catch {
     res.status(500).json({ message: 'Something went wrong' })

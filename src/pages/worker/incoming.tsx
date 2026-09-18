@@ -110,7 +110,7 @@ export default function WorkerIncoming() {
                 )
               : null
             return (
-              <div key={r.id} className="paper-card animate-list-in p-5">
+              <div key={r.id} className="paper-card paper-card-hover animate-list-in p-5">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <h3 className="font-display text-lg font-semibold">{r.title}</h3>

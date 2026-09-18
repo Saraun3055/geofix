@@ -178,7 +178,27 @@ export default function WorkerVerification() {
             </button>
 
             {preview && (
-              <img src={preview} alt="Preview" className="mt-4 max-h-56 rounded-lg border border-border" />
+              <div className="mt-4 animate-scale-in overflow-hidden rounded-xl border border-primary/30 bg-muted/30 p-3">
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-primary">New submission preview</p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPreview(null)
+                      setFile(null)
+                      if (inputRef.current) inputRef.current.value = ''
+                    }}
+                    className="inline-flex cursor-pointer items-center gap-1 text-[11px] font-medium text-muted-foreground transition-colors hover:text-destructive"
+                  >
+                    <XCircle className="h-3.5 w-3.5" /> Remove
+                  </button>
+                </div>
+                <img
+                  src={preview}
+                  alt="ID preview"
+                  className="mx-auto max-h-56 rounded-lg border border-border shadow-sm"
+                />
+              </div>
             )}
 
             <div className="mt-5 flex items-center justify-between">

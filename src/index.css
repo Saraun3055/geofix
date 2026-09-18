@@ -50,6 +50,7 @@
 
 /* Default: Customer & shared surface (warm parchment) */
 :root {
+  color-scheme: light;
   --radius: 0.75rem;
   --background: #faf6ef;
   --foreground: #221a15;
@@ -112,6 +113,76 @@
   --sidebar-accent: #251f1a;
   --sidebar-accent-foreground: #f3eadc;
   --sidebar-border: #2c251e;
+  --sidebar-ring: #c9a26b;
+}
+
+/* ────────────────────────────────────────────────────────────── */
+/* Dark theme — opt-in via the theme toggle. Default stays light. */
+/* ────────────────────────────────────────────────────────────── */
+.dark {
+  color-scheme: dark;
+  --background: #17130f;
+  --foreground: #f1e8d8;
+  --card: #211b14;
+  --card-foreground: #f5ecdd;
+  --popover: #211b14;
+  --popover-foreground: #f5ecdd;
+  --primary: #e07a4f;
+  --primary-foreground: #25110a;
+  --secondary: #2e251b;
+  --secondary-foreground: #eadbc2;
+  --muted: #241d15;
+  --muted-foreground: #a3907b;
+  --accent: #f2a33c;
+  --accent-foreground: #2a1a04;
+  --destructive: #e15a43;
+  --destructive-foreground: #fff5f2;
+  --border: #392f22;
+  --input: #4a3d2c;
+  --ring: #e07a4f;
+  --sidebar: #120d09;
+  --sidebar-foreground: #ecdfc9;
+  --sidebar-primary: #e58a5c;
+  --sidebar-primary-foreground: #1e1209;
+  --sidebar-accent: #2a2117;
+  --sidebar-accent-foreground: #f6ecda;
+  --sidebar-border: #32281b;
+  --sidebar-ring: #e58a5c;
+}
+
+/* Worker portal dark: amber-flavored */
+.dark .portal-worker {
+  --primary: #d9a441;
+  --primary-foreground: #261903;
+  --ring: #d9a441;
+  --accent: #e8a33d;
+  --sidebar-primary: #dfa33c;
+  --sidebar-primary-foreground: #241a05;
+  --background: #171311;
+}
+
+/* Admin portal dark: neutral operations */
+.dark .portal-admin {
+  --background: #14120f;
+  --foreground: #ece4d7;
+  --card: #1d1a16;
+  --card-foreground: #f1e9db;
+  --primary: #c8b6a0;
+  --primary-foreground: #1c160e;
+  --ring: #c8b6a0;
+  --accent: #b08a4b;
+  --accent-foreground: #241c0e;
+  --muted: #251f19;
+  --muted-foreground: #9c8e7c;
+  --border: #2f2923;
+  --input: #3a332b;
+  --sidebar: #100d0b;
+  --sidebar-foreground: #ece2d2;
+  --sidebar-primary: #c9a26b;
+  --sidebar-primary-foreground: #191512;
+  --sidebar-accent: #221c15;
+  --sidebar-accent-foreground: #f3eadc;
+  --sidebar-border: #2a241c;
   --sidebar-ring: #c9a26b;
 }
 

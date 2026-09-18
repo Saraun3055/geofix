@@ -1,10 +1,14 @@
 import { Link } from 'react-router-dom'
 import { Logo } from '@/components/logo'
 import { Stars } from '@/components/stars'
+import { ThemeToggle } from '@/components/theme-toggle'
 
 export function AuthShell({ children, title }: { children: React.ReactNode; title?: string }) {
   return (
-    <div className="geo-grid flex min-h-screen items-center justify-center bg-background px-4 py-10">
+    <div className="geo-grid relative flex min-h-screen items-center justify-center bg-background px-4 py-10">
+      <div className="absolute right-4 top-4">
+        <ThemeToggle />
+      </div>
       <div className="grid w-full max-w-5xl overflow-hidden rounded-2xl border border-border shadow-2xl animate-in lg:grid-cols-[1fr_1.1fr]">
         {/* Brand panel */}
         <div className="relative hidden overflow-hidden bg-foreground p-10 text-background lg:flex lg:flex-col">

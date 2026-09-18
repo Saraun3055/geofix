@@ -2,6 +2,7 @@ import { Router, type Response } from 'express'
 import { WorkerProfile, toWorkerDoc } from '../models/WorkerProfile'
 import { VerificationQueue } from '../models/VerificationQueue'
 import { haversineMeters, type LatLng } from '../utils/geo'
+import { requireRole } from '../middleware/role'
 import type { AuthRequest } from '../middleware/types'
 
 const router = Router()
@@ -84,10 +85,10 @@ router.get('/:userId', async (req: AuthRequest, res: Response) => {
 })
 
 /** PATCH /workers/:userId/availability — toggle isOnline (worker self-service). */
-router.patch('/:userId/availability', async (req: AuthRequest, res: Response) => {
+router.patch('/:userId/availability', requireRole('worker'), async (req: AuthRequest, res: Response) => {
   const { isOnline } = req.body as { isOnline?: boolean }
   try {
-    if (req.user!.role !== 'worker' || req.user!.id !== req.params.userId) {
+    if (req.user!.id !== req.params.userId) {
       res.status(403).json({ message: 'You can only update your own availability' })
       return
     }
@@ -107,13 +108,13 @@ router.patch('/:userId/availability', async (req: AuthRequest, res: Response) =>
 })
 
 /** PATCH /workers/:userId/profile — worker self-service: update skills + availability slots. */
-router.patch('/:userId/profile', async (req: AuthRequest, res: Response) => {
+router.patch('/:userId/profile', requireRole('worker'), async (req: AuthRequest, res: Response) => {
   const { categorySkills, availableSlots } = req.body as {
     categorySkills?: string[]
     availableSlots?: { day: string; from: string; to: string }[]
   }
   try {
-    if (req.user!.role !== 'worker' || req.user!.id !== req.params.userId) {
+    if (req.user!.id !== req.params.userId) {
       res.status(403).json({ message: 'You can only update your own profile' })
       return
     }
@@ -142,10 +143,10 @@ router.patch('/:userId/profile', async (req: AuthRequest, res: Response) => {
 })
 
 /** POST /workers/:userId/verification — submit/update ID verification (worker self-service). */
-router.post('/:userId/verification', async (req: AuthRequest, res: Response) => {
+router.post('/:userId/verification', requireRole('worker'), async (req: AuthRequest, res: Response) => {
   const { govIdUrl, name } = req.body as { govIdUrl?: string; name?: string }
   try {
-    if (req.user!.role !== 'worker' || req.user!.id !== req.params.userId) {
+    if (req.user!.id !== req.params.userId) {
       res.status(403).json({ message: 'You can only submit verification for yourself' })
       return
     }

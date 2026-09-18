@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { MessageCircle, Copy, ExternalLink } from 'lucide-react'
+import { MessageCircle, Copy, ExternalLink, Phone } from 'lucide-react'
 import { toastSuccess } from '@/hooks/use-toast'
 
 export function buildWhatsAppUrl(
@@ -52,21 +52,44 @@ export function WhatsAppHandoff({
   })
 
   const [copied, setCopied] = useState(false)
+  const [copiedNumber, setCopiedNumber] = useState(false)
   useEffect(() => {
     if (!copied) return
     const t = setTimeout(() => setCopied(false), 2000)
     return () => clearTimeout(t)
   }, [copied])
+  useEffect(() => {
+    if (!copiedNumber) return
+    const t = setTimeout(() => setCopiedNumber(false), 2000)
+    return () => clearTimeout(t)
+  }, [copiedNumber])
+
+  function copyPhone() {
+    navigator.clipboard.writeText(phone)
+    setCopiedNumber(true)
+    toastSuccess('Copied', `${phone} copied to clipboard`)
+  }
 
   return (
     <div className="space-y-3">
-      <Button
-        className="w-full h-12 gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-base"
-        onClick={() => window.open(url, '_blank', 'noopener,noreferrer')}
-      >
-        <MessageCircle className="h-5 w-5" />
-        Open in WhatsApp
-      </Button>
+      <div className="grid grid-cols-2 gap-3">
+        <Button
+          className="h-12 gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-base"
+          onClick={() => window.open(url, '_blank', 'noopener,noreferrer')}
+        >
+          <MessageCircle className="h-5 w-5" />
+          Open in WhatsApp
+        </Button>
+        <Button
+          variant="outline"
+          className="h-12 gap-2"
+          onClick={copyPhone}
+          disabled={!phone}
+        >
+          <Phone className="h-4 w-4" />
+          {copiedNumber ? 'Copied!' : 'Copy number'}
+        </Button>
+      </div>
       <p className="text-center text-xs text-muted-foreground">
         WhatsApp blocked the popup?{' '}
         <a className="text-primary underline underline-offset-2" href={url} target="_blank" rel="noreferrer">

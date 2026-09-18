@@ -1,10 +1,13 @@
 import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
+import helmet from 'helmet'
 import cookieParser from 'cookie-parser'
 import type { Request, Response, NextFunction } from 'express'
 import { connectDb } from './config/db'
 import { requireAuth } from './middleware/auth'
+import { sanitize } from './middleware/sanitize'
+import { writeLimiter } from './middleware/rate-limit'
 import authRoutes from './routes/auth.routes'
 import usersRoutes from './routes/users.routes'
 import workersRoutes from './routes/workers.routes'
@@ -16,9 +19,16 @@ const app = express()
 const PORT = Number(process.env.PORT ?? 4000)
 const CORS_ORIGIN = process.env.CORS_ORIGIN ?? 'http://localhost:5173'
 
+app.use(helmet())
 app.use(cors({ origin: CORS_ORIGIN, credentials: true }))
 app.use(express.json({ limit: '10mb' }))
 app.use(cookieParser())
+
+// NoSQL-injection defense (applied to every request body, query and params)
+app.use(sanitize)
+
+// Rate limiting for write/mutation routes
+app.use(writeLimiter)
 
 app.get('/health', (_req: Request, res: Response) => {
   res.json({ ok: true, service: 'geofix-api', mode: 'local-api' })

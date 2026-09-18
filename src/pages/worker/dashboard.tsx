@@ -127,7 +127,7 @@ export default function WorkerDashboard() {
         {incoming.data && incoming.data.length > 0 ? (
           <div className="mt-3 space-y-3">
             {incoming.data.slice(0, 3).map((r) => (
-              <div key={r.id} className="paper-card paper-card-hover p-4">
+              <div key={r.id} className="paper-card paper-card-hover animate-stagger-in p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="font-display text-base font-semibold">{r.title}</p>
@@ -189,16 +189,42 @@ export default function WorkerDashboard() {
 
 function AvailabilityToggle({ online, onToggle }: { online: boolean; onToggle: () => void }) {
   return (
-    <button
-      onClick={onToggle}
-      className={cn(
-        'flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-colors cursor-pointer',
-        online ? 'border-emerald-300 bg-emerald-50 text-emerald-800' : 'border-border bg-muted text-muted-foreground',
-      )}
-    >
-      {online ? <Wifi className="h-4 w-4" /> : <WifiOff className="h-4 w-4" />}
-      {online ? 'Online' : 'Offline'}
-      <span className={cn('h-2 w-2 rounded-full', online ? 'bg-emerald-500' : 'bg-muted-foreground/50')} />
-    </button>
+    <div className="flex flex-col items-end gap-1">
+      <div className="relative flex items-center rounded-full border border-border bg-muted/60 p-0.5">
+        <span
+          aria-hidden
+          className="absolute bottom-0.5 left-0.5 top-0.5 w-[calc(50%-2px)] rounded-full bg-background shadow-sm transition-all duration-300 ease-out"
+          style={{ transform: online ? 'translateX(100%)' : 'translateX(0)' }}
+        />
+        <button
+          type="button"
+          onClick={() => !online && onToggle()}
+          className={cn(
+            'relative z-10 inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition-colors cursor-pointer',
+            online ? 'text-muted-foreground' : 'text-foreground',
+          )}
+          aria-pressed={!online}
+        >
+          <WifiOff className="h-4 w-4" />
+          Offline
+        </button>
+        <button
+          type="button"
+          onClick={() => !online && onToggle()}
+          className={cn(
+            'relative z-10 inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition-colors cursor-pointer',
+            online ? 'text-emerald-700' : 'text-muted-foreground',
+          )}
+          aria-pressed={online}
+        >
+          <Wifi className="h-4 w-4" />
+          Online
+          {online && <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />}
+        </button>
+      </div>
+      <span className={cn('pr-1 text-[11px] font-medium', online ? 'text-emerald-600' : 'text-muted-foreground')}>
+        {online ? 'Now showing up in searches' : 'Hidden from new searches'}
+      </span>
+    </div>
   )
 }

@@ -19,6 +19,49 @@ const EMAIL_RE = /^\S+@\S+\.\S+$/
 const PASSWORD_RE = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/
 const PASSWORD_MSG = 'Password must be at least 8 characters with one uppercase letter, one number and one special character'
 
+function passwordScore(p: string): number {
+  let score = 0
+  if (p.length >= 8) score++
+  if (/[A-Z]/.test(p)) score++
+  if (/[a-z]/.test(p)) score++
+  if (/\d/.test(p)) score++
+  if (/[^A-Za-z0-9]/.test(p)) score++
+  return score
+}
+
+const PASSWORD_TIERS = [
+  { label: 'Too short', color: 'bg-destructive', active: 0 },
+  { label: 'Weak', color: 'bg-rose-400', active: 1 },
+  { label: 'Fair', color: 'bg-amber-400', active: 2 },
+  { label: 'Good', color: 'bg-lime-400', active: 3 },
+  { label: 'Strong', color: 'bg-emerald-500', active: 4 },
+] as const
+
+function PasswordMeter({ password }: { password: string }) {
+  if (!password) return null
+  const score = passwordScore(password)
+  const tier = PASSWORD_TIERS[Math.min(score, PASSWORD_TIERS.length - 1)]!
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center gap-1" aria-hidden>
+        {PASSWORD_TIERS.map((t) => (
+          <span
+            key={t.label}
+            className={cn(
+              'h-1 flex-1 rounded-full transition-colors duration-300',
+              score >= t.active ? t.color : 'bg-border',
+            )}
+          />
+        ))}
+      </div>
+      <p className={cn('text-xs font-medium', score === 0 ? 'text-muted-foreground' : 'text-foreground')}>
+        Strength: {tier.label}
+        {score < 3 && <span className="font-normal text-muted-foreground"> — {PASSWORD_MSG}</span>}
+      </p>
+    </div>
+  )
+}
+
 function phoneDigits(p: string): string {
   return String(p ?? '').replace(/\D/g, '')
 }
@@ -287,6 +330,7 @@ export default function SignupPage() {
                   {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+              <PasswordMeter password={password} />
               {errors.password && <p className="text-xs font-medium text-destructive">{errors.password}</p>}
             </div>
           </>

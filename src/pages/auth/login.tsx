@@ -115,12 +115,20 @@ export default function LoginPage() {
             <Button type="submit" className="w-full" disabled={busy}>
               {busy ? 'Signing in…' : 'Sign in'}
             </Button>
-            <p className="text-center text-sm text-muted-foreground">
-              New to GeoFix?{' '}
-              <Link to="/signup" className="font-medium text-primary">
-                Create an account
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">
+                New to GeoFix?{' '}
+                <Link to="/signup" className="font-medium text-primary">
+                  Create an account
+                </Link>
+              </p>
+              <Link
+                to="/forgot-password"
+                className="text-sm font-medium text-primary transition-opacity hover:opacity-80"
+              >
+                Forgot password?
               </Link>
-            </p>
+            </div>
           </form>
         </div>
       ) : (

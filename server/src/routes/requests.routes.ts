@@ -4,21 +4,13 @@ import { WorkerProfile } from '../models/WorkerProfile'
 import { Dispute, toDisputeDoc, type DisputeDoc } from '../models/Dispute'
 import { latLngToGeo, parseLatLng, type LatLng } from '../utils/geo'
 import { logAudit } from '../utils/audit'
+import { requireRole } from '../middleware/role'
 import type { AuthRequest } from '../middleware/types'
 
 const router = Router()
 
-router.use((req, res, next) => {
-  const auth = req as AuthRequest
-  if (!auth.user) {
-    res.status(401).json({ message: 'Authentication required' })
-    return
-  }
-  next()
-})
-
-/** CREATE a new service request (customer). Location required. */
-router.post('/', async (req: AuthRequest, res: Response) => {
+/** Strict RBAC: only customers create service requests. */
+router.post('/', requireRole('customer'), async (req: AuthRequest, res: Response) => {
   interface CreateBody {
     category: string
     title: string
@@ -38,10 +30,6 @@ router.post('/', async (req: AuthRequest, res: Response) => {
     }
     if (!loc) {
       res.status(400).json({ message: 'A valid location is required' })
-      return
-    }
-    if (req.user!.role !== 'customer') {
-      res.status(403).json({ message: 'Only customers can create requests' })
       return
     }
 
@@ -66,10 +54,13 @@ router.post('/', async (req: AuthRequest, res: Response) => {
   }
 })
 
-/** GET /requests/mine?customerId= — customer's own requests (all statuses). */
-router.get('/mine', async (req: AuthRequest, res: Response) => {
+/** GET /requests/mine — the caller's own requests (customers + admins). */
+router.get('/mine', requireRole('customer', 'admin'), async (req: AuthRequest, res: Response) => {
   try {
-    const customerId = typeof req.query.customerId === 'string' ? req.query.customerId : req.user!.id
+    // Non-admin callers can only ever read their own requests.
+    const customerId = req.user!.role === 'admin' && typeof req.query.customerId === 'string'
+      ? req.query.customerId
+      : req.user!.id
     const docs = await ServiceRequest.find({ customerId }).sort({ createdAt: -1 }).lean()
     res.json(docs.map((d) => toRequestDoc(d as typeof d & { _id: unknown })))
   } catch {
@@ -77,10 +68,10 @@ router.get('/mine', async (req: AuthRequest, res: Response) => {
   }
 })
 
-/** GET /requests/incoming?workerId= — requests awaiting a worker's response. */
-router.get('/incoming', async (req: AuthRequest, res: Response) => {
+/** GET /requests/incoming — requests awaiting a worker's response. */
+router.get('/incoming', requireRole('worker'), async (req: AuthRequest, res: Response) => {
   try {
-    const workerId = typeof req.query.workerId === 'string' ? req.query.workerId : req.user!.id
+    const workerId = req.user!.id
     const docs = await ServiceRequest.find({
       workerId,
       status: 'pending_worker_response',
@@ -93,9 +84,14 @@ router.get('/incoming', async (req: AuthRequest, res: Response) => {
   }
 })
 
-/** GET /requests/worker/:workerId — completed/accepted jobs for worker history. */
-router.get('/worker/:workerId', async (req: AuthRequest, res: Response) => {
+/** GET /requests/worker/:workerId — completed/accepted jobs for worker history.
+ *  Workers may only fetch their own history; admins may read anyone's. */
+router.get('/worker/:workerId', requireRole('worker', 'admin'), async (req: AuthRequest, res: Response) => {
   try {
+    if (req.user!.role === 'worker' && req.params.workerId !== req.user!.id) {
+      res.status(403).json({ message: 'You do not have permission to perform this action' })
+      return
+    }
     const docs = await ServiceRequest.find({
       workerId: req.params.workerId,
       status: { $in: ['accepted', 'on_the_way', 'arrived', 'in_progress', 'completed'] },
@@ -108,12 +104,17 @@ router.get('/worker/:workerId', async (req: AuthRequest, res: Response) => {
   }
 })
 
-/** GET /requests/:id — live status of a single request. */
+/** GET /requests/:id — live status of a single request (parties + admins only). */
 router.get('/:id', async (req: AuthRequest, res: Response) => {
   try {
-    const doc = await ServiceRequest.findById(req.params.id).lean()
+    const doc = await ServiceRequest.findById(String(req.params.id)).lean()
     if (!doc) {
       res.status(404).json({ message: 'Request not found' })
+      return
+    }
+    const isParty = String(doc.customerId) === req.user!.id || String(doc.workerId ?? '') === req.user!.id
+    if (req.user!.role !== 'admin' && !isParty) {
+      res.status(403).json({ message: 'You do not have permission to perform this action' })
       return
     }
     res.json(toRequestDoc(doc as typeof doc & { _id: unknown }))
@@ -122,8 +123,8 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
   }
 })
 
-/** Assign a worker candidate (customer picks from nearby list). */
-router.patch('/:id/assign', async (req: AuthRequest, res: Response) => {
+/** Assign a worker candidate (customers assign to their own requests only). */
+router.patch('/:id/assign', requireRole('customer'), async (req: AuthRequest, res: Response) => {
   const { workerId, workerName } = req.body as { workerId?: string; workerName?: string }
   try {
     if (!workerId) {
@@ -133,6 +134,10 @@ router.patch('/:id/assign', async (req: AuthRequest, res: Response) => {
     const doc = await ServiceRequest.findById(req.params.id)
     if (!doc) {
       res.status(404).json({ message: 'Request not found' })
+      return
+    }
+    if (doc.customerId !== req.user!.id) {
+      res.status(403).json({ message: 'You can only assign a worker to your own request' })
       return
     }
     if (doc.status !== 'searching') {
@@ -156,25 +161,27 @@ router.patch('/:id/assign', async (req: AuthRequest, res: Response) => {
   }
 })
 
-/** Worker accepts an incoming request. */
-router.patch('/:id/accept', async (req: AuthRequest, res: Response) => {
-  const { workerId } = req.body as { workerId?: string }
+/** Worker accepts an incoming request assigned to them. */
+router.patch('/:id/accept', requireRole('worker'), async (req: AuthRequest, res: Response) => {
   try {
     const doc = await ServiceRequest.findById(req.params.id)
     if (!doc) {
       res.status(404).json({ message: 'Request not found' })
       return
     }
+    if (doc.workerId !== req.user!.id) {
+      res.status(403).json({ message: 'This request was not assigned to you' })
+      return
+    }
     if (doc.status !== 'pending_worker_response') {
       res.status(409).json({ message: 'This request cannot be accepted right now' })
       return
     }
-    const worker = await WorkerProfile.findOne({ userId: workerId ?? req.user!.id })
+    const worker = await WorkerProfile.findOne({ userId: req.user!.id })
     doc.status = 'accepted'
     doc.acceptedAt = new Date()
     doc.updatedAt = new Date()
     doc.jobUpdates.push({ status: 'accepted', note: undefined, timestamp: new Date() })
-    if (workerId) doc.workerId = workerId
     doc.workerName = worker?.name ?? doc.workerName
     doc.whatsappNumber = worker?.phone ?? doc.whatsappNumber
     doc.chatChannelId = `${doc.customerId}__${doc.workerId}`
@@ -191,20 +198,21 @@ router.patch('/:id/accept', async (req: AuthRequest, res: Response) => {
   }
 })
 
-/** Worker declines an incoming request → re-queues it. */
-router.patch('/:id/reject', async (req: AuthRequest, res: Response) => {
-  const { workerId } = req.body as { workerId?: string }
+/** Worker declines an incoming request assigned to them → re-queues it. */
+router.patch('/:id/reject', requireRole('worker'), async (req: AuthRequest, res: Response) => {
   try {
     const doc = await ServiceRequest.findById(req.params.id)
     if (!doc) {
       res.status(404).json({ message: 'Request not found' })
       return
     }
-    const rejectingId = workerId ?? req.user!.id
-    if (doc.workerId === rejectingId) {
-      doc.workerId = null
-      doc.workerName = null
+    if (doc.workerId !== req.user!.id) {
+      res.status(403).json({ message: 'This request was not assigned to you' })
+      return
     }
+    const rejectingId = req.user!.id
+    doc.workerId = null
+    doc.workerName = null
     if (!doc.rejectedBy.includes(rejectingId)) doc.rejectedBy.push(rejectingId)
     doc.status = 'searching'
     doc.updatedAt = new Date()
@@ -217,8 +225,8 @@ router.patch('/:id/reject', async (req: AuthRequest, res: Response) => {
   }
 })
 
-/** Worker advances a job through its active lifecycle: accepted → on_the_way → arrived → in_progress. */
-router.patch('/:id/progress', async (req: AuthRequest, res: Response) => {
+/** Worker advances their assigned job: accepted → on_the_way → arrived → in_progress. */
+router.patch('/:id/progress', requireRole('worker'), async (req: AuthRequest, res: Response) => {
   const { status, note } = req.body as { status?: string; note?: string }
   const VALID_TRANSITION = new Map<string, string>([
     ['accepted', 'on_the_way'],
@@ -257,10 +265,9 @@ router.patch('/:id/progress', async (req: AuthRequest, res: Response) => {
   }
 })
 
-/** Worker marks the request complete and submits a bill. */
-router.patch('/:id/complete', async (req: AuthRequest, res: Response) => {
-  const { workerId, productsCost, laborWage, note } = req.body as {
-    workerId?: string
+/** Worker marks their assigned request complete and submits a bill. */
+router.patch('/:id/complete', requireRole('worker'), async (req: AuthRequest, res: Response) => {
+  const { productsCost, laborWage, note } = req.body as {
     productsCost?: number
     laborWage?: number
     note?: string
@@ -271,8 +278,8 @@ router.patch('/:id/complete', async (req: AuthRequest, res: Response) => {
       res.status(404).json({ message: 'Request not found' })
       return
     }
-    const completingWorkerId = workerId ?? doc.workerId
-    if (!completingWorkerId || completingWorkerId !== doc.workerId) {
+    const completingWorkerId = req.user!.id
+    if (!doc.workerId || doc.workerId !== completingWorkerId) {
       res.status(403).json({ message: 'Only the assigned worker can complete this request' })
       return
     }
@@ -313,8 +320,8 @@ router.patch('/:id/complete', async (req: AuthRequest, res: Response) => {
   }
 })
 
-/** Customer pays the bill and picks a payment method (cash / UPI). */
-router.post('/:id/pay', async (req: AuthRequest, res: Response) => {
+/** Customer pays the bill for their own request (cash / UPI). */
+router.post('/:id/pay', requireRole('customer'), async (req: AuthRequest, res: Response) => {
   const { paymentMethod } = req.body as { paymentMethod?: 'cash' | 'upi' }
   try {
     const doc = await ServiceRequest.findById(req.params.id)
@@ -351,12 +358,16 @@ router.post('/:id/pay', async (req: AuthRequest, res: Response) => {
   }
 })
 
-/** Customer cancels a booking — allowed until the job reaches completion. */
-router.patch('/:id/cancel', async (req: AuthRequest, res: Response) => {
+/** Customer cancels their own request — allowed until the job reaches completion. */
+router.patch('/:id/cancel', requireRole('customer'), async (req: AuthRequest, res: Response) => {
   try {
     const doc = await ServiceRequest.findById(req.params.id)
     if (!doc) {
       res.status(404).json({ message: 'Request not found' })
+      return
+    }
+    if (doc.customerId !== req.user!.id) {
+      res.status(403).json({ message: 'You can only cancel your own requests' })
       return
     }
     if (
@@ -376,7 +387,7 @@ router.patch('/:id/cancel', async (req: AuthRequest, res: Response) => {
   }
 })
 
-/** POST /requests/:id/dispute — customer or worker raises a dispute. */
+/** POST /requests/:id/dispute — the customer or the assigned worker on this request. */
 router.post('/:id/dispute', async (req: AuthRequest, res: Response) => {
   const { reason, description } = req.body as { reason?: string; description?: string }
   try {
@@ -389,7 +400,13 @@ router.post('/:id/dispute', async (req: AuthRequest, res: Response) => {
       res.status(404).json({ message: 'Request not found' })
       return
     }
-    const raisedBy: DisputeDoc['raisedBy'] = doc.customerId === req.user!.id ? 'customer' : 'worker'
+    const isCustomer = String(doc.customerId) === req.user!.id
+    const isWorker = String(doc.workerId ?? '') === req.user!.id
+    if (!isCustomer && !isWorker) {
+      res.status(403).json({ message: 'Only the customer or assigned worker can raise a dispute' })
+      return
+    }
+    const raisedBy: DisputeDoc['raisedBy'] = isCustomer ? 'customer' : 'worker'
     const dispute = await Dispute.create({
       requestId: doc._id.toString(),
       raisedBy,

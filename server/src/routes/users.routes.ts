@@ -1,5 +1,6 @@
 import { Router, type Response } from 'express'
 import { User, toSafeUser } from '../models/User'
+import { Admin, toSafeAdmin } from '../models/Admin'
 import type { AuthRequest } from '../middleware/types'
 
 const router = Router()
@@ -16,6 +17,15 @@ router.use((req, res, next) => {
 router.get('/me', async (req, res: Response) => {
   const auth = req as AuthRequest
   try {
+    if (auth.user!.role === 'admin') {
+      const admin = await Admin.findById(auth.user!.id)
+      if (!admin) {
+        res.status(404).json({ message: 'Admin not found' })
+        return
+      }
+      res.json(toSafeAdmin({ ...admin.toObject(), _id: admin._id }))
+      return
+    }
     const user = await User.findById(auth.user!.id)
     if (!user) {
       res.status(404).json({ message: 'User not found' })
@@ -31,10 +41,20 @@ router.patch('/me', async (req: AuthRequest, res: Response) => {
   const { name, phone, photoUrl } = req.body as { name?: string; phone?: string; photoUrl?: string }
   const updates: Record<string, unknown> = {}
   if (typeof name === 'string' && name.trim()) updates.name = name.trim()
-  if (typeof phone === 'string') updates.phone = phone.trim()
   if (typeof photoUrl === 'string') updates.photoUrl = photoUrl
 
   try {
+    if (req.user!.role === 'admin') {
+      const admin = await Admin.findByIdAndUpdate(req.user!.id, updates, { new: true })
+      if (!admin) {
+        res.status(404).json({ message: 'Admin not found' })
+        return
+      }
+      res.json(toSafeAdmin({ ...admin.toObject(), _id: admin._id }))
+      return
+    }
+
+    if (typeof phone === 'string') updates.phone = phone.trim()
     const user = await User.findByIdAndUpdate(req.user!.id, updates, { new: true })
     if (!user) {
       res.status(404).json({ message: 'User not found' })

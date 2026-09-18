@@ -11,6 +11,8 @@ import { LoadingSpinner } from '@/components/loading-spinner'
 const Landing = lazy(() => import('@/pages/landing'))
 const LoginPage = lazy(() => import('@/pages/auth/login'))
 const SignupPage = lazy(() => import('@/pages/auth/signup'))
+const ForgotPasswordPage = lazy(() => import('@/pages/auth/forgot-password'))
+const ResetPasswordPage = lazy(() => import('@/pages/auth/reset-password'))
 
 const CustomerLayout = lazy(() => import('@/layouts/customer-layout'))
 const CustomerDashboard = lazy(() => import('@/pages/customer/dashboard'))
@@ -55,6 +57,8 @@ function AppRoutes() {
       {/* Auth */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/portal" element={<RoleRedirect />} />
 
       {/* Customer portal */}

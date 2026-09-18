@@ -1,6 +1,7 @@
 import 'dotenv/config'
 import bcrypt from 'bcryptjs'
 import { User } from '../models/User'
+import { Admin } from '../models/Admin'
 import { WorkerProfile } from '../models/WorkerProfile'
 import { ServiceRequest } from '../models/ServiceRequest'
 import { Rating } from '../models/Rating'
@@ -31,7 +32,7 @@ function isoAgo(min: number): Date {
   return new Date(Date.now() - min * 60_000)
 }
 
-async function upsertUser(email: string, password: string, name: string, role: 'customer' | 'worker' | 'admin') {
+async function upsertUser(email: string, password: string, name: string, role: 'customer' | 'worker') {
   const existing = await User.findOne({ email })
   if (existing) return existing
   return User.create({
@@ -40,6 +41,18 @@ async function upsertUser(email: string, password: string, name: string, role: '
     passwordHash: await bcrypt.hash(password, 10),
     phone: '+91 9' + String(Math.floor(100000000 + Math.random() * 899999999)),
     role,
+  })
+}
+
+/** Admins live in their own collection — never alongside customers/workers. */
+async function upsertAdmin(email: string, password: string, name: string, adminRole: 'superadmin' | 'support' = 'support') {
+  const existing = await Admin.findOne({ email })
+  if (existing) return existing
+  return Admin.create({
+    name,
+    email,
+    passwordHash: await bcrypt.hash(password, 10),
+    adminRole,
   })
 }
 
@@ -67,7 +80,10 @@ async function seed() {
   }
 
   // Demo accounts the frontend login screen already suggests.
-  const adminUser = await upsertUser('ops@geofix.app', 'admin1234', 'Ops Admin', 'admin')
+  // Admin accounts belong to their own collection; any legacy admin docs left
+  // in the users collection are migrated out so users stay customer/worker only.
+  await User.deleteMany({ $or: [{ role: 'admin' }, { email: 'ops@geofix.app' }] })
+  const adminUser = await upsertAdmin('ops@geofix.app', 'admin1234', 'Ops Admin', 'superadmin')
   const customerUser = await upsertUser('customer.demo@geofix.app', 'customer1234', 'Demo Customer', 'customer')
 
   // 10 deterministic workers + dedicated demo worker account.

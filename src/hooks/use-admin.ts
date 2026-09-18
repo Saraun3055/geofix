@@ -19,12 +19,12 @@ import type {
 const isDemo = dataMode === 'demo'
 const isLocalApi = dataMode === 'local-api'
 
-export function useVerificationQueue() {
+export function useVerificationQueue(status: 'pending' | 'approved' | 'rejected' | 'all' = 'pending') {
   return useQuery({
-    queryKey: ['verificationQueue'],
+    queryKey: ['verificationQueue', status],
     queryFn: async (): Promise<VerificationQueueDoc[]> => {
-      if (isLocalApi) return getVerificationQueue()
-      return getDemoStore().verificationQueue.filter((v) => v.status === 'pending')
+      if (isLocalApi) return getVerificationQueue(status)
+      return getDemoStore().verificationQueue.filter((v) => status === 'all' || v.status === status)
     },
     refetchInterval: isDemo || isLocalApi ? 5000 : false,
   })

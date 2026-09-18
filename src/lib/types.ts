@@ -13,6 +13,7 @@ export interface UserDoc {
   email?: string
   phone?: string
   role: UserRole
+  adminRole?: AdminRole
   avatarUrl?: string
   suspended?: boolean
   createdAt: string

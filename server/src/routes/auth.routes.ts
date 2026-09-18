@@ -1,7 +1,9 @@
+import { randomInt } from 'crypto'
 import { Router, type Request, type Response } from 'express'
 import bcrypt from 'bcryptjs'
 import rateLimit from 'express-rate-limit'
 import { User, toSafeUser, type SafeUser } from '../models/User'
+import { Admin, toSafeAdmin, type SafeAdmin } from '../models/Admin'
 import { WorkerProfile } from '../models/WorkerProfile'
 import { signAccessToken, signRefreshToken, verifyRefreshToken, refreshCookieOptions } from '../utils/token'
 import { latLngToGeo, type LatLng } from '../utils/geo'
@@ -17,7 +19,9 @@ const authLimiter = rateLimit({
   message: { message: 'Too many attempts, please try again later' },
 })
 
-function authResponse(res: Response, userId: string, role: SafeUser['role'], user: SafeUser): void {
+type AuthUserRepr = SafeUser | SafeAdmin
+
+function authResponse(res: Response, userId: string, role: SafeUser['role'], user: AuthUserRepr): void {
   const access = signAccessToken(userId, role)
   const refresh = signRefreshToken(userId, role)
   res.cookie('refreshToken', refresh, refreshCookieOptions())
@@ -27,6 +31,8 @@ function authResponse(res: Response, userId: string, role: SafeUser['role'], use
 const EMAIL_RE = /^\S+@\S+\.\S+$/
 const PHONE_RE = /^\+?[\d\s()-]{10,}$/
 const PASSWORD_RE = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/
+
+const RESET_CODE_TTL_MIN = 30
 
 /** Normalise a phone number to digits only so (+91) 98765-43210 ≡ 9876543210. */
 function phoneDigits(phone: string): string {
@@ -90,6 +96,14 @@ function handleWriteError(res: Response, e: unknown): void {
   res.status(500).json({ message: 'Something went wrong' })
 }
 
+/** Admin accounts are provisioned separately and can never be re-created by
+ *  public signup, so uniqueness checks must cover the admins collection too. */
+async function accountExistsByEmail(email: string): Promise<boolean> {
+  const clean = email.toLowerCase().trim()
+  const [user, admin] = await Promise.all([User.exists({ email: clean }), Admin.exists({ email: clean })])
+  return Boolean(user) || Boolean(admin)
+}
+
 router.post('/phone-exists', authLimiter, async (req: Request, res: Response) => {
   try {
     const phone = typeof req.body?.phone === 'string' ? req.body.phone.trim() : ''
@@ -113,8 +127,8 @@ router.post('/email-exists', authLimiter, async (req: Request, res: Response) =>
       res.status(400).json({ message: 'A valid email address is required' })
       return
     }
-    const exists = await User.findOne({ email }).lean()
-    res.json({ exists: !!exists })
+    const exists = await accountExistsByEmail(email)
+    res.json({ exists })
   } catch {
     res.status(500).json({ message: 'Something went wrong' })
   }
@@ -143,8 +157,7 @@ router.post('/signup', authLimiter, async (req: Request, res: Response) => {
       return
     }
 
-    const existed = await User.findOne({ email: email.toLowerCase().trim() })
-    if (existed) {
+    if (await accountExistsByEmail(email)) {
       res.status(409).json({ message: 'An account with this email already exists' })
       return
     }
@@ -207,7 +220,26 @@ router.post('/login', authLimiter, async (req: Request, res: Response) => {
       return
     }
 
-    const user = await User.findOne({ email: email.toLowerCase().trim() })
+    const cleanEmail = email.toLowerCase().trim()
+
+    const admin = await Admin.findOne({ email: cleanEmail })
+    if (admin) {
+      if (admin.suspended) {
+        res.status(403).json({ message: 'This account has been suspended' })
+        return
+      }
+      const ok = await bcrypt.compare(password, admin.passwordHash)
+      if (!ok) {
+        res.status(401).json({ message: 'Invalid email or password' })
+        return
+      }
+      const safe = toSafeAdmin({ ...admin.toObject(), _id: admin._id })
+      await logAudit({ actorId: safe.id, actorRole: 'admin', action: 'login', targetId: safe.id })
+      authResponse(res, admin._id.toString(), 'admin', safe)
+      return
+    }
+
+    const user = await User.findOne({ email: cleanEmail })
     if (!user) {
       res.status(401).json({ message: 'Invalid email or password' })
       return
@@ -231,6 +263,117 @@ router.post('/login', authLimiter, async (req: Request, res: Response) => {
   }
 })
 
+router.post('/forgot-password', authLimiter, async (req: Request, res: Response) => {
+  try {
+    const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : ''
+    if (!email || !EMAIL_RE.test(email)) {
+      res.status(400).json({ message: 'Enter a valid email address' })
+      return
+    }
+
+    // Always answer generically so we don't leak which emails have accounts.
+    const generic = { message: 'If an account exists for that email, a reset code has been generated.' }
+
+    const [admin, user] = await Promise.all([
+      Admin.findOne({ email }).select('resetTokenHash resetTokenExpiresAt email').lean(),
+      User.findOne({ email }).select('resetTokenHash resetTokenExpiresAt email').lean(),
+    ])
+    if (!admin && !user) {
+      // Still burn a small delay to keep timing uniform.
+      await bcrypt.hash(String(randomInt(100000, 999999)), 4)
+      res.json(generic)
+      return
+    }
+
+    const code = String(randomInt(100000, 999999))
+    const resetTokenHash = await bcrypt.hash(code, 10)
+    const patch = { resetTokenHash, resetTokenExpiresAt: new Date(Date.now() + RESET_CODE_TTL_MIN * 60_000) }
+    if (admin) {
+      await Admin.updateOne({ _id: admin._id }, patch)
+    } else {
+      await User.updateOne({ _id: user!._id }, patch)
+    }
+
+    // No mailer is configured — log the code so the developer can hand it to the user.
+    console.log(`[auth] password reset code for ${email}: ${code}`)
+
+    // Dev convenience: expose the code so the flow works end-to-end without an SMTP provider.
+    res.json({
+      ...generic,
+      ...(process.env.NODE_ENV !== 'production' ? { devCode: code } : {}),
+    })
+  } catch (e) {
+    handleWriteError(res, e)
+  }
+})
+
+router.post('/reset-password', authLimiter, async (req: Request, res: Response) => {
+  try {
+    const { email, code, password } = req.body as { email?: string; code?: string; password?: string }
+    const cleanEmail = typeof email === 'string' ? email.trim().toLowerCase() : ''
+    const cleanCode = typeof code === 'string' ? code.trim() : ''
+    const cleanPassword = typeof password === 'string' ? password : ''
+
+    if (!cleanEmail || !EMAIL_RE.test(cleanEmail)) {
+      res.status(400).json({ message: 'Enter a valid email address' })
+      return
+    }
+    if (!/^\d{6}$/.test(cleanCode)) {
+      res.status(400).json({ message: 'Enter the 6-digit reset code you received' })
+      return
+    }
+    if (!PASSWORD_RE.test(cleanPassword)) {
+      res.status(400).json({ message: 'Password must be at least 8 characters with one uppercase letter, one number and one special character' })
+      return
+    }
+
+    const [admin, user] = await Promise.all([Admin.findOne({ email: cleanEmail }), User.findOne({ email: cleanEmail })])
+    const isAdmin = Boolean(admin)
+    const subject = isAdmin ? admin : user
+    if (!isAdmin && !user) {
+      res.status(401).json({ message: 'Invalid reset code or expired request' })
+      return
+    }
+    if (!subject!.resetTokenHash || !subject!.resetTokenExpiresAt) {
+      res.status(401).json({ message: 'No reset request found — request a new code' })
+      return
+    }
+    if (subject!.resetTokenExpiresAt.getTime() < Date.now()) {
+      if (isAdmin) {
+        await Admin.updateOne({ _id: admin!._id }, { $unset: { resetTokenHash: 1, resetTokenExpiresAt: 1 } })
+      } else {
+        await User.updateOne({ _id: user!._id }, { $unset: { resetTokenHash: 1, resetTokenExpiresAt: 1 } })
+      }
+      res.status(401).json({ message: 'Reset code expired — request a new one' })
+      return
+    }
+
+    const ok = await bcrypt.compare(cleanCode, subject!.resetTokenHash)
+    if (!ok) {
+      res.status(401).json({ message: 'Invalid reset code — double-check and retry' })
+      return
+    }
+
+    const passwordHash = await bcrypt.hash(cleanPassword, 10)
+    if (isAdmin) {
+      await Admin.updateOne({ _id: admin!._id }, { passwordHash, $unset: { resetTokenHash: 1, resetTokenExpiresAt: 1 } })
+    } else {
+      await User.updateOne({ _id: user!._id }, { passwordHash, $unset: { resetTokenHash: 1, resetTokenExpiresAt: 1 } })
+    }
+
+    res.clearCookie('refreshToken', { ...refreshCookieOptions(), maxAge: undefined })
+    await logAudit({
+      actorId: subject!._id.toString(),
+      actorRole: isAdmin ? 'admin' : user!.role,
+      action: 'password_reset',
+      targetId: subject!._id.toString(),
+    })
+    res.json({ message: 'Password updated — you can now sign in.' })
+  } catch (e) {
+    handleWriteError(res, e)
+  }
+})
+
 router.post('/refresh', async (req: Request, res: Response) => {
   const token = req.cookies?.refreshToken as string | undefined
   if (!token) {
@@ -240,6 +383,16 @@ router.post('/refresh', async (req: Request, res: Response) => {
 
   try {
     const payload = verifyRefreshToken(token)
+    if (payload.role === 'admin') {
+      const admin = await Admin.findById(payload.sub)
+      if (!admin || admin.suspended) {
+        res.status(401).json({ message: 'Session expired' })
+        return
+      }
+      const safe = toSafeAdmin({ ...admin.toObject(), _id: admin._id })
+      authResponse(res, admin._id.toString(), 'admin', safe)
+      return
+    }
     const user = await User.findById(payload.sub)
     if (!user || user.suspended) {
       res.status(401).json({ message: 'Session expired' })

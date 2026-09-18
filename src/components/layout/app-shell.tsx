@@ -4,6 +4,7 @@ import { Menu, X, LogOut, ChevronRight } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { LogoFull, Logo } from '@/components/logo'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { ThemeToggle } from '@/components/theme-toggle'
 import { cn } from '@/lib/utils'
 
 export interface NavItem {
@@ -58,6 +59,9 @@ export function AppShell({
           <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.18em] text-sidebar-foreground/45">
             {portal} portal
           </p>
+        </div>
+        <div className="ml-auto">
+          <ThemeToggle tone="sidebar" />
         </div>
       </div>
 
@@ -175,6 +179,9 @@ export function AppShell({
             <Menu className="h-5 w-5" />
           </button>
           <LogoFull size={26} className="text-foreground" textClassName="text-base" />
+          <div className="ml-auto">
+            <ThemeToggle />
+          </div>
         </header>
 
         <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">

@@ -5,6 +5,8 @@ import '@fontsource-variable/archivo'
 import '@fontsource-variable/jetbrains-mono'
 import './index.css'
 import App from './App.tsx'
+import { initTheme } from '@/lib/theme'
+initTheme()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

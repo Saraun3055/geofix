@@ -41,7 +41,7 @@ function StatBlock({
   mono?: boolean
 }) {
   return (
-    <div className="rounded-xl border border-border bg-card px-4 py-3.5">
+    <div className="rounded-xl border border-border bg-card px-4 py-3.5 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md">
       <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
         <Icon className="h-3.5 w-3.5" /> {label}
       </div>
@@ -254,7 +254,7 @@ export default function AdminOverview() {
               .filter((r) => ACTIVE_STATUSES.includes(r.status))
               .slice(0, 6)
               .map((r) => (
-                <div key={r.id} className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background/60 px-3 py-2">
+                <div key={r.id} className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background/60 px-3 py-2 transition-all duration-200 hover:border-primary/40 hover:bg-card">
                   <div className="flex min-w-0 items-center gap-3">
                     <span className="h-2 w-2 shrink-0 rounded-full bg-primary" />
                     <div className="min-w-0">

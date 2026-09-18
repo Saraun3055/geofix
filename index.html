@@ -7,6 +7,13 @@
     <meta name="description" content="GeoFix Madurai — top-rated local plumbers, electricians & technicians. Instant WhatsApp connect with Madurai's best repair experts." />
     <meta name="theme-color" content="#1c1714" />
     <title>GeoFix Madurai — Top-Rated Local Repair Experts</title>
+    <script>
+      ((m) => {
+        var t
+        try { t = (localStorage.getItem('geofix-theme') || 'light').trim() } catch (e) { t = 'light' }
+        if (t === 'dark') document.documentElement.classList.add('dark')
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

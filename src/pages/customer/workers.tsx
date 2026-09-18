@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Star, Loader2, Search, ArrowLeft, UserRound, ArrowRight, WifiOff, ShieldCheck, MapPin, Zap } from 'lucide-react'
 import { useAllWorkers } from '@/hooks/use-workers'
@@ -9,6 +9,7 @@ import { Stars } from '@/components/stars'
 import { StatusBadge } from '@/components/status-badge'
 import { Button } from '@/components/ui/button'
 import { CategoryIcon } from '@/components/category-icon'
+import { MapView, type MapMarker } from '@/components/map-view'
 
 import { toastError, toastSuccess } from '@/hooks/use-toast'
 import { haversine } from '@/lib/geo'
@@ -61,6 +62,37 @@ export default function CustomerWorkers() {
   }, [allWorkers, excludeIds, category, sortBy, customerLocation])
 
   const [busyWorker, setBusyWorker] = useState<string | null>(null)
+  const [activeWorkerId, setActiveWorkerId] = useState<string | null>(null)
+  const workerCardRefs = useRef<Record<string, HTMLDivElement | null>>({})
+
+  const mapMarkers = useMemo<MapMarker[]>(
+    () =>
+      (workers ?? [])
+        .filter((w) => Number.isFinite(w.g.geopoint.latitude) && Number.isFinite(w.g.geopoint.longitude))
+        .map((w) => ({
+          id: w.userId,
+          lat: w.g.geopoint.latitude,
+          lng: w.g.geopoint.longitude,
+          label: w.name.split(' ')[0],
+          color: w.rating >= 4.8 ? '#d97706' : '#2f6f4f',
+          kind: 'worker' as const,
+          category: w.categorySkills[0],
+        })),
+    [workers],
+  )
+
+  const mapCenter = useMemo(() => {
+    if (customerLocation) {
+      return { lat: customerLocation.latitude, lng: customerLocation.longitude }
+    }
+    const m = mapMarkers[0]
+    return m ? { lat: m.lat, lng: m.lng } : { lat: 28.6139, lng: 77.209 }
+  }, [customerLocation, mapMarkers])
+
+  function handleMarkerSelect(workerId: string) {
+    setActiveWorkerId(workerId)
+    workerCardRefs.current[workerId]?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
 
   async function handleRequestWorker(worker: WorkerProfileDoc) {
     if (!requestId) return
@@ -149,6 +181,16 @@ export default function CustomerWorkers() {
         </div>
       ) : (
         <div className="space-y-3">
+          {mapMarkers.length > 0 && (
+            <MapView
+              markers={mapMarkers}
+              center={mapCenter}
+              height={240}
+              activeId={activeWorkerId ?? undefined}
+              onMarkerSelect={handleMarkerSelect}
+              className="shadow-sm"
+            />
+          )}
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-xs font-medium text-muted-foreground">
               {workers.length} professional{workers.length === 1 ? '' : 's'} found —{' '}
@@ -188,9 +230,14 @@ export default function CustomerWorkers() {
           {workers.map((worker, i) => (
             <div
               key={worker.userId}
+              ref={(el) => {
+                workerCardRefs.current[worker.userId] = el
+              }}
+              onMouseEnter={() => setActiveWorkerId(worker.userId)}
               className={cn(
-                'paper-card paper-card-hover flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between animate-stagger-in',
+                'paper-card paper-card-hover flex flex-col gap-4 p-4 transition-all duration-200 sm:flex-row sm:items-center sm:justify-between animate-stagger-in cursor-pointer',
                 worker.rating >= 4.8 && 'glow-amber',
+                activeWorkerId === worker.userId && 'ring-2 ring-primary/60 shadow-lg',
               )}
               style={{ animationDelay: `${i * 55}ms` }}
             >

@@ -73,6 +73,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       email: user.email ?? null,
       phone: user.phone ?? null,
       role: user.role,
+      adminRole: user.adminRole,
       status: 'authenticated',
       isDemoMode: false,
       accessToken: useAuthStore.getState().accessToken,

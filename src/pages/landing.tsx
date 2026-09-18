@@ -15,6 +15,7 @@ import { Logo } from '@/components/logo'
 import { Button } from '@/components/ui/button'
 import { Stars } from '@/components/stars'
 import { CategoryIcon } from '@/components/category-icon'
+import { ThemeToggle } from '@/components/theme-toggle'
 import { CATEGORY_LIST } from '@/lib/types'
 
 const steps = [
@@ -53,6 +54,7 @@ function Nav() {
           <a href="#for-workers" className="transition-colors hover:text-foreground">For workers</a>
         </nav>
         <div className="flex items-center gap-2">
+          <ThemeToggle />
           <Button variant="ghost" size="sm" asChild>
             <Link to="/login">Log in</Link>
           </Button>

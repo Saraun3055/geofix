@@ -15,7 +15,7 @@ import type { DisputeDoc } from '@/lib/types'
 
 function DisputeRow({ d, onResolve }: { d: DisputeDoc; onResolve: (d: DisputeDoc) => void }) {
   return (
-    <div className="paper-card p-5">
+    <div className="paper-card paper-card-hover p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="flex flex-wrap items-center gap-2">

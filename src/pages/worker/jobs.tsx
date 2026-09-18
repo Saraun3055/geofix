@@ -89,7 +89,7 @@ export default function WorkerJobs() {
           {jobs.map((job) => {
             const rating = ratings?.find((r) => r.requestId === job.id)
             return (
-            <div key={job.id} className="paper-card p-4">
+            <div key={job.id} className="paper-card paper-card-hover p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">

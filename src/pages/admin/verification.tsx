@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/empty-state'
 import { formatRelativeTime } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,9 +20,19 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 
+type QueueStatus = 'pending' | 'approved' | 'rejected' | 'all'
+
+const QUEUE_TABS: { value: QueueStatus; label: string }[] = [
+  { value: 'pending', label: 'Pending' },
+  { value: 'approved', label: 'Approved' },
+  { value: 'rejected', label: 'Rejected' },
+  { value: 'all', label: 'All' },
+]
+
 export default function AdminVerification() {
   const admin = useAuthStore((s) => s.uid) ?? 'admin'
-  const { data: queue, isLoading } = useVerificationQueue()
+  const [status, setStatus] = useState<QueueStatus>('pending')
+  const { data: queue, isLoading } = useVerificationQueue(status)
   const { data: workers } = useAllWorkers()
   const [target, setTarget] = useState<{ workerId: string; action: 'approve' | 'reject' } | null>(null)
   const [busy, setBusy] = useState(false)
@@ -57,18 +68,41 @@ export default function AdminVerification() {
         </p>
       </div>
 
+      <div className="flex gap-1 rounded-lg border border-border bg-card p-1 text-xs font-medium">
+        {QUEUE_TABS.map((t) => (
+          <button
+            key={t.value}
+            type="button"
+            onClick={() => setStatus(t.value)}
+            className={cn(
+              'rounded-md px-3 py-1.5 transition-colors cursor-pointer',
+              status === t.value ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground',
+            )}
+          >
+            {t.label}
+            <span className="ml-1 font-normal opacity-70">
+              {t.value === 'all' ? '' : '·'}
+            </span>
+          </button>
+        ))}
+      </div>
+
       {!queue || queue.length === 0 ? (
         <EmptyState
           icon={ShieldCheck}
-          title="Queue is clear"
-          description="There are no pending verifications right now. New submissions will appear here in real time."
+          title={status === 'pending' ? 'Queue is clear' : 'Nothing here'}
+          description={
+            status === 'pending'
+              ? 'There are no pending verifications right now. New submissions will appear here in real time.'
+              : `No ${status === 'all' ? '' : status} submissions to show.`
+          }
         />
       ) : (
         <div className="space-y-4">
           {queue.map((item) => {
             const worker = workers?.find((w) => w.userId === item.workerId)
             return (
-              <div key={item.workerId} className="paper-card animate-list-in p-5">
+              <div key={item.workerId} className="paper-card paper-card-hover animate-list-in p-5">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div className="flex items-start gap-4">
                     <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-secondary font-display text-sm font-bold text-secondary-foreground">

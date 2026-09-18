@@ -44,6 +44,7 @@ type RawUser = {
   email?: string
   phone?: string
   role?: string
+  adminRole?: string
   createdAt?: string
   photoUrl?: string
 }
@@ -55,6 +56,7 @@ function toUserDoc(u: RawUser): UserDoc {
     email: u.email as string | undefined,
     phone: u.phone as string | undefined,
     role: (u.role ?? 'customer') as UserDoc['role'],
+    adminRole: (u.adminRole as UserDoc['adminRole']) ?? undefined,
     createdAt: (u.createdAt ?? new Date().toISOString()) as string,
   }
 }
@@ -62,6 +64,18 @@ function toUserDoc(u: RawUser): UserDoc {
 export async function apiLogin(email: string, password: string): Promise<AuthResponse> {
   const res = await api.post<{ accessToken: string; user: RawUser }>('/auth/login', { email, password })
   return { accessToken: res.accessToken, user: toUserDoc(res.user) }
+}
+
+export async function requestPasswordReset(email: string): Promise<{ message: string; devCode?: string }> {
+  return api.post<{ message: string; devCode?: string }>('/auth/forgot-password', { email })
+}
+
+export async function resetPassword(input: {
+  email: string
+  code: string
+  password: string
+}): Promise<{ message: string }> {
+  return api.post<{ message: string }>('/auth/reset-password', input)
 }
 
 export async function apiSignup(input: {
@@ -321,8 +335,9 @@ export async function getRatingsForWorker(workerId: string): Promise<RatingDoc[]
 }
 
 /* ──────────────────── Admin ──────────────────── */
-export async function getVerificationQueue(): Promise<VerificationQueueDoc[]> {
-  return api.get<VerificationQueueDoc[]>('/admin/verification-queue?status=pending')
+export async function getVerificationQueue(status?: 'pending' | 'approved' | 'rejected' | 'all'): Promise<VerificationQueueDoc[]> {
+  const qs = status && status !== 'pending' ? `?status=${status}` : ''
+  return api.get<VerificationQueueDoc[]>(`/admin/verification-queue${qs}`)
 }
 
 export async function reviewVerification(workerId: string, status: 'approved' | 'rejected'): Promise<boolean> {

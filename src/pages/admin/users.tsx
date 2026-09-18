@@ -11,6 +11,16 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/empty-state'
 import { formatRelativeTime } from '@/lib/utils'
 import { cn } from '@/lib/utils'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import type { UserDoc } from '@/lib/types'
 
 export default function AdminUsers() {
@@ -82,16 +92,22 @@ export default function AdminUsers() {
 
 function UserRow({ user, admin }: { user: UserDoc; admin: string }) {
   const [busy, setBusy] = useState(false)
+  const [confirm, setConfirm] = useState<'suspend' | 'restore' | null>(null)
+
+  const isSelf = user.uid === admin
+  const isAdmin = user.role === 'admin'
 
   async function toggle() {
+    if (!confirm) return
     setBusy(true)
-    if (user.suspended) await unsuspendUser(user.uid)
+    if (confirm === 'restore') await unsuspendUser(user.uid)
     else await suspendUser(user.uid, admin)
     setBusy(false)
+    setConfirm(null)
   }
 
   return (
-    <div className="paper-card flex items-center justify-between gap-3 p-4">
+    <div className="paper-card paper-card-hover flex items-center justify-between gap-3 p-4">
       <div className="flex min-w-0 items-center gap-3">
         <Avatar>
           <AvatarFallback className={cn(user.role === 'worker' && 'bg-amber-100 text-amber-800')}>
@@ -109,12 +125,17 @@ function UserRow({ user, admin }: { user: UserDoc; admin: string }) {
         </div>
       </div>
       <div className="flex shrink-0 flex-col items-end gap-2">
-        <Badge variant={user.role === 'worker' ? 'warning' : 'secondary'}>{user.role}</Badge>
+        <Badge variant={user.role === 'worker' ? 'warning' : user.role === 'admin' ? 'default' : 'secondary'}>{user.role}</Badge>
+        {isSelf || isAdmin ? (
+          <p className="text-[11px] font-medium text-muted-foreground">
+            {isSelf ? 'Your own account — protected' : 'Managed separately'}
+          </p>
+        ) : (
         <Button
           size="sm"
           variant={user.suspended ? 'outline' : 'ghost'}
           className={user.suspended ? '' : 'text-destructive'}
-          onClick={toggle}
+          onClick={() => setConfirm(user.suspended ? 'restore' : 'suspend')}
           disabled={busy}
         >
           {user.suspended ? (
@@ -123,7 +144,35 @@ function UserRow({ user, admin }: { user: UserDoc; admin: string }) {
             <><UserX className="h-3.5 w-3.5" /> Suspend</>
           )}
         </Button>
+        )}
       </div>
+
+      <AlertDialog open={confirm !== null} onOpenChange={(o) => !o && setConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirm === 'restore' ? 'Restore this account?' : `Suspend ${user.name}?`}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirm === 'restore'
+                ? 'The user regains access to log in and use GeoFix again.'
+                : 'The user can no longer log in or appear in searches while suspended. You can restore them any time.'}
+              {confirm === 'suspend' && (user.role === 'worker' ? ' They will be hidden from customer results.' : '')} This
+              action is written to the audit log.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={toggle}
+              disabled={busy}
+              className={confirm === 'suspend' ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : ''}
+            >
+              {busy ? 'Saving…' : confirm === 'restore' ? 'Restore' : 'Suspend'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

@@ -3,6 +3,7 @@ import { Rating, toRatingDoc } from '../models/Rating'
 import { ServiceRequest } from '../models/ServiceRequest'
 import { WorkerProfile } from '../models/WorkerProfile'
 import { logAudit } from '../utils/audit'
+import { requireRole } from '../middleware/role'
 import type { AuthRequest } from '../middleware/types'
 
 const router = Router()
@@ -17,7 +18,7 @@ router.use((req, res, next) => {
 })
 
 /** POST /ratings — customer rates a worker after a completed request. */
-router.post('/', async (req: AuthRequest, res: Response) => {
+router.post('/', requireRole('customer'), async (req: AuthRequest, res: Response) => {
   const { requestId, workerId, rating, comment } = req.body as {
     requestId?: string
     workerId?: string
@@ -28,10 +29,6 @@ router.post('/', async (req: AuthRequest, res: Response) => {
     const r = Math.round(Number(rating))
     if (!requestId || !workerId || !Number.isFinite(r) || r < 1 || r > 5) {
       res.status(400).json({ message: 'requestId, workerId and a 1-5 rating are required' })
-      return
-    }
-    if (req.user!.role !== 'customer') {
-      res.status(403).json({ message: 'Only customers can submit ratings' })
       return
     }
     const request = await ServiceRequest.findById(requestId)
