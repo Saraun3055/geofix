@@ -12,6 +12,8 @@ export type AuthState = {
   name: string | null
   email: string | null
   phone: string | null
+  pincode?: string | null
+  area?: string | null
   role: 'customer' | 'worker' | 'admin' | null
   adminRole?: 'superadmin' | 'support'
   status: 'loading' | 'authenticated' | 'unauthenticated'
@@ -25,8 +27,8 @@ export type AuthState = {
   signOut: () => void
   setFromDemo: (user: DemoAuthUser) => void
   setFromApi: (user: UserDoc) => void
-  /** Update editable profile details (name / phone) after a save. */
-  applyProfile: (name: string | null, phone?: string | null) => void
+  /** Update editable profile details (name / phone / home area) after a save. */
+  applyProfile: (name: string | null, phone?: string | null, opts?: { pincode?: string | null; area?: string | null }) => void
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -34,6 +36,8 @@ export const useAuthStore = create<AuthState>((set) => ({
   name: null,
   email: null,
   phone: null,
+  pincode: null,
+  area: null,
   role: null,
   adminRole: undefined,
   status: 'loading',
@@ -44,7 +48,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   setAccessToken: (accessToken) => set({ accessToken }),
 
   signOut: () => {
-    set({ uid: null, name: null, email: null, phone: null, role: null, adminRole: undefined, accessToken: null, status: 'unauthenticated' })
+    set({ uid: null, name: null, email: null, phone: null, pincode: null, area: null, role: null, adminRole: undefined, accessToken: null, status: 'unauthenticated' })
     setDemoAuthUser(null)
     if (isLocalApi) {
       import('@/services/local-api').then((m) => m.apiLogout()).catch(() => undefined)
@@ -57,6 +61,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       name: user.name,
       email: user.email,
       phone: user.phone ?? null,
+      pincode: user.pincode ?? null,
+      area: user.area ?? null,
       role: user.role,
       adminRole: user.adminRole,
       status: 'authenticated',
@@ -72,6 +78,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       name: user.name,
       email: user.email ?? null,
       phone: user.phone ?? null,
+      pincode: user.pincode ?? null,
+      area: user.area ?? null,
       role: user.role,
       adminRole: user.adminRole,
       status: 'authenticated',
@@ -80,10 +88,12 @@ export const useAuthStore = create<AuthState>((set) => ({
     })
   },
 
-  applyProfile: (name, phone) => {
+  applyProfile: (name, phone, opts) => {
     set((s) => ({
       name: name ?? s.name,
       phone: phone !== undefined && phone !== null ? (phone === '' ? null : phone) : s.phone,
+      pincode: opts?.pincode !== undefined ? opts.pincode : s.pincode,
+      area: opts?.area !== undefined ? opts.area : s.area,
     }))
   },
 }))

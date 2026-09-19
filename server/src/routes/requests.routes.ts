@@ -18,6 +18,8 @@ router.post('/', requireRole('customer'), async (req: AuthRequest, res: Response
     photoUrls?: string[]
     location: LatLng
     address?: string
+    pincode?: string
+    area?: string
     whatsappNumber?: string
   }
   const body = req.body as CreateBody
@@ -43,6 +45,8 @@ router.post('/', requireRole('customer'), async (req: AuthRequest, res: Response
       status: 'searching',
       customerLocation: latLngToGeo(loc),
       customerAddress: body.address ?? null,
+      customerPincode: typeof body.pincode === 'string' ? body.pincode.slice(0, 6) : undefined,
+      customerArea: typeof body.area === 'string' ? body.area : undefined,
       rejectedBy: [],
       whatsappNumber: body.whatsappNumber ?? null,
     })

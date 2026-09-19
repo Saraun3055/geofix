@@ -15,6 +15,10 @@ export interface UserDoc {
   role: UserRole
   adminRole?: AdminRole
   avatarUrl?: string
+  /** Home pincode (6-digit) from the Madurai dataset. */
+  pincode?: string
+  /** Home area name from the Madurai dataset. */
+  area?: string
   suspended?: boolean
   createdAt: string
 }
@@ -38,6 +42,10 @@ export interface WorkerProfileDoc {
   jobsCompleted: number
   isOnline: boolean
   address?: string
+  /** Home/service pincode (6-digit) from the Madurai lookup dataset. */
+  pincode?: string
+  /** Home/service area name from the Madurai lookup dataset. */
+  area?: string
   bio?: string
   avgResponseMin?: number
   govIdUrl?: string
@@ -93,6 +101,10 @@ export interface ServiceRequestDoc {
   jobUpdates?: JobUpdateDoc[]
   customerLocation: GeoPointLike
   customerAddress?: string
+  /** Pincode (6-digit) resolved from the Madurai dataset for this request. */
+  customerPincode?: string
+  /** Area name resolved from the Madurai dataset for this request. */
+  customerArea?: string
   rejectedBy: string[]
   ratingGiven?: boolean
   whatsappNumber?: string

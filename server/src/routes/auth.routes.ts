@@ -187,7 +187,7 @@ router.post('/signup', authLimiter, async (req: Request, res: Response) => {
     if (cleanRole === 'worker') {
       const coords: [number, number] = location?.longitude != null && location?.latitude != null
         ? [location.longitude, location.latitude]
-        : [77.209, 28.6139]
+        : [78.1198, 9.9252] // Madurai city core — matches src/lib/madurai-locations.ts MADURAI_CENTER
       await WorkerProfile.create({
         userId: user._id.toString(),
         name,

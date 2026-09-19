@@ -38,10 +38,18 @@ router.get('/me', async (req, res: Response) => {
 })
 
 router.patch('/me', async (req: AuthRequest, res: Response) => {
-  const { name, phone, photoUrl } = req.body as { name?: string; phone?: string; photoUrl?: string }
+  const { name, phone, photoUrl, pincode, area } = req.body as {
+    name?: string
+    phone?: string
+    photoUrl?: string
+    pincode?: string
+    area?: string
+  }
   const updates: Record<string, unknown> = {}
   if (typeof name === 'string' && name.trim()) updates.name = name.trim()
   if (typeof photoUrl === 'string') updates.photoUrl = photoUrl
+  if (typeof pincode === 'string') updates.pincode = pincode.replace(/\D+/g, '').slice(0, 6)
+  if (typeof area === 'string') updates.area = area.trim()
 
   try {
     if (req.user!.role === 'admin') {

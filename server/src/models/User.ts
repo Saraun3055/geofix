@@ -6,6 +6,8 @@ export const userSchema = new Schema(
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     passwordHash: { type: String, required: true },
     phone: { type: String, default: '' },
+    pincode: { type: String, default: null },
+    area: { type: String, default: null },
     role: { type: String, enum: ['customer', 'worker', 'admin'], default: 'customer' },
     photoUrl: { type: String, default: '' },
     suspended: { type: Boolean, default: false },
@@ -24,6 +26,8 @@ export interface SafeUser {
   name: string
   email: string
   phone: string
+  pincode?: string
+  area?: string
   role: 'customer' | 'worker' | 'admin'
   photoUrl?: string
   adminRole?: string
@@ -36,6 +40,8 @@ export function toSafeUser(u: UserDoc & { _id: unknown }): SafeUser {
     name: u.name,
     email: u.email,
     phone: u.phone ?? '',
+    pincode: (u.pincode as string | null | undefined) ?? undefined,
+    area: (u.area as string | null | undefined) ?? undefined,
     role: u.role as 'customer' | 'worker' | 'admin',
     photoUrl: u.photoUrl ?? '',
     createdAt: new Date(u.createdAt).toISOString(),

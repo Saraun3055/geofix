@@ -11,16 +11,29 @@ import { useAuthStore } from '@/stores/auth'
 import { useMyRequests } from '@/hooks/use-requests'
 import { updateMyProfile } from '@/services/profile.service'
 import { toastError, toastSuccess } from '@/hooks/use-toast'
+import { PincodeLocationPicker } from '@/components/pincode-location-picker'
+import {
+  getLocationByPincode,
+  searchMaduraiLocations,
+  type MaduraiLocation,
+} from '@/lib/madurai-locations'
 
 export default function CustomerProfile() {
   const uid = useAuthStore((s) => s.uid)
   const name = useAuthStore((s) => s.name) ?? 'Customer'
   const email = useAuthStore((s) => s.email)
   const phone = useAuthStore((s) => s.phone)
+  const homePincode = useAuthStore((s) => s.pincode)
+  const homeArea = useAuthStore((s) => s.area)
 
   const [editing, setEditing] = useState(false)
   const [nameInput, setNameInput] = useState(name)
   const [phoneInput, setPhoneInput] = useState(phone ?? '')
+  const [region, setRegion] = useState<MaduraiLocation | null>(
+    getLocationByPincode(homePincode ?? '') ??
+      (homePincode ? searchMaduraiLocations(homePincode, 1)[0] : undefined) ??
+      null,
+  )
   const [saving, setSaving] = useState(false)
 
   const { data: requests = [], isLoading } = useMyRequests(uid)
@@ -47,6 +60,11 @@ export default function CustomerProfile() {
   function startEditing() {
     setNameInput(name)
     setPhoneInput(phone ?? '')
+    setRegion(
+      getLocationByPincode(homePincode ?? '') ??
+        (homePincode ? searchMaduraiLocations(homePincode, 1)[0] : undefined) ??
+        null,
+    )
     setEditing(true)
   }
 
@@ -56,7 +74,12 @@ export default function CustomerProfile() {
       return
     }
     setSaving(true)
-    const ok = await updateMyProfile({ name: nameInput, phone: phoneInput })
+    const ok = await updateMyProfile({
+      name: nameInput,
+      phone: phoneInput,
+      pincode: region?.pincode,
+      area: region?.name,
+    })
     setSaving(false)
     if (ok) {
       toastSuccess('Profile updated', 'Your profile details have been saved.')
@@ -90,7 +113,19 @@ export default function CustomerProfile() {
                 <Phone className="h-4 w-4" /> {phone ?? '—'}
               </span>
               <span className="flex items-center gap-2 text-muted-foreground">
-                <MapPin className="h-4 w-4" /> Location shared per request
+                <MapPin className="h-4 w-4" />
+                {homeArea ? (
+                  <>
+                    {homeArea}
+                    {homePincode && (
+                      <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] font-medium text-muted-foreground/80">
+                        {homePincode}
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  'Location shared per request'
+                )}
               </span>
             </>
           ) : (
@@ -102,6 +137,15 @@ export default function CustomerProfile() {
               <div className="space-y-1.5">
                 <Label htmlFor="phone">Phone</Label>
                 <Input id="phone" value={phoneInput} onChange={(e) => setPhoneInput(e.target.value)} placeholder="+91…" className="h-10" />
+              </div>
+              <div className="col-span-full space-y-2">
+                <Label className="flex items-center gap-1.5">
+                  <MapPin className="h-3.5 w-3.5" /> Home pincode & area
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  We pre-fill this on new requests so you don't type it every time.
+                </p>
+                <PincodeLocationPicker value={region} onChange={setRegion} hideNearby />
               </div>
             </div>
           )}

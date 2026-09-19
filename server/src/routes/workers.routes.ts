@@ -109,9 +109,12 @@ router.patch('/:userId/availability', requireRole('worker'), async (req: AuthReq
 
 /** PATCH /workers/:userId/profile — worker self-service: update skills + availability slots. */
 router.patch('/:userId/profile', requireRole('worker'), async (req: AuthRequest, res: Response) => {
-  const { categorySkills, availableSlots } = req.body as {
+  const { categorySkills, availableSlots, address, pincode, area } = req.body as {
     categorySkills?: string[]
     availableSlots?: { day: string; from: string; to: string }[]
+    address?: string
+    pincode?: string
+    area?: string
   }
   try {
     if (req.user!.id !== req.params.userId) {
@@ -134,6 +137,9 @@ router.patch('/:userId/profile', requireRole('worker'), async (req: AuthRequest,
         .filter((s) => VALID_DAYS.includes(s.day) && timeRe.test(s.from) && timeRe.test(s.to))
       profile.availableSlots = clean as typeof profile.availableSlots
     }
+    if (typeof address === 'string') profile.address = address
+    if (typeof pincode === 'string') profile.pincode = pincode.slice(0, 6)
+    if (typeof area === 'string') profile.area = area
     profile.markModified('availableSlots')
     await profile.save()
     res.json(toWorkerDoc({ ...profile.toObject(), _id: profile._id }))

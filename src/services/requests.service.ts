@@ -26,6 +26,8 @@ export async function createRequest(
     photoUrls: string[]
     location: GeoPointLike
     address?: string
+    pincode?: string
+    area?: string
     whatsappNumber?: string
   },
 ): Promise<string> {
@@ -44,6 +46,8 @@ export async function createRequest(
     status: 'searching',
     customerLocation: { latitude: data.location.latitude, longitude: data.location.longitude },
     customerAddress: data.address,
+    customerPincode: data.pincode,
+    customerArea: data.area,
     rejectedBy: [],
     createdAt: isoNow(),
   }

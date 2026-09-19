@@ -11,11 +11,12 @@ import {
   type RequestStatus,
   CATEGORY_LIST,
 } from './types'
+import { encodeGeohash } from './geo'
+import { MADURAI_LOCATIONS, formatLocation, type MaduraiLocation } from './madurai-locations'
 
 const CATEGORIES: ServiceCategory[] = [...CATEGORY_LIST]
 const NAMES_C = ['Aisha Patel', 'Marco Rivera', 'Liam Chen', 'Fatima Al-Hassan', 'Chloe Dubois', 'Samuel Okafor', 'Priya Nair', 'Noah Lindqvist', 'Zara Shah', 'Theo Martin']
 const NAMES_W = ['Rajan Kumar', 'Yusuf Idris', 'Miguel Santos', 'Ravi Sharma', 'Jamal Benson', 'Anna Nowak', 'Diego Morales', 'Hassan Patel', 'Luca Bertoni', 'Tariq Osman']
-const ADDR = ['Simmakkal Main Rd, Madurai', 'Anna Nagar 6th St, Madurai', 'KK Nagar 4th St, Madurai', 'Goripalayam, Madurai', 'Vilakkuthoon, Madurai', 'Tallakulam, Madurai', 'By-Pass Rd, Madurai', 'D Villpuram St, Madurai']
 const REVIEWS = [
   'Very professional, fixed the leak quickly.',
   'Great work! Arrived on time and cleaned up after.',
@@ -33,10 +34,13 @@ function randItem<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)]!
 }
 
-function randomGeoPoint(baseLat = 9.9252, baseLng = 78.1198, spread = 0.06): GeoPointLike {
-  const lat = baseLat + (Math.random() - 0.5) * spread * 2
-  const lng = baseLng + (Math.random() - 0.5) * spread * 2
-  return { latitude: lat, longitude: lng }
+/** Deterministically pick a Madurai region so demo data looks real but stable. */
+function seedLocation(index: number): MaduraiLocation {
+  return MADURAI_LOCATIONS[(index * 31 + 5) % MADURAI_LOCATIONS.length]!
+}
+
+function locationToGeoPoint(loc: MaduraiLocation): GeoPointLike {
+  return { latitude: loc.lat, longitude: loc.lng }
 }
 
 function randomRating() {
@@ -95,25 +99,30 @@ function saveDemoStore(store: DemoStore) {
 }
 
 function generateDemoData(): DemoStore {
-  const workers: WorkerProfileDoc[] = NAMES_W.map((name, i) => ({
-    userId: `w${i}`,
-    name,
-    phone: `+91${9000000000 + i}`,
-    categorySkills: [CATEGORIES[i % CATEGORIES.length]!, CATEGORIES[(i + 2) % CATEGORIES.length]!],
-    rating: randomRating(),
-    ratingCount: 8 + Math.floor(Math.random() * 40),
-    jobsCompleted: 15 + Math.floor(Math.random() * 80),
-    isOnline: i === 0 || i === 1 || i === 4 || i === 5 ? true : Math.random() > 0.3,
-    address: ADDR[i % ADDR.length],
-    bio: 'Experienced professional with a focus on quality.',
-    avgResponseMin: 3 + Math.floor(Math.random() * 12),
-    verificationStatus: i < 8 ? 'approved' : i === 8 ? 'pending' : 'rejected',
-    availableSlots: availabilityFor(i),
-    g: {
-      geohash: 't9fx2q1r7p0k',
-      geopoint: randomGeoPoint(),
-    },
-  }))
+  const workers: WorkerProfileDoc[] = NAMES_W.map((name, i) => {
+    const loc = seedLocation(i * 3)
+    return {
+      userId: `w${i}`,
+      name,
+      phone: `+91${9000000000 + i}`,
+      categorySkills: [CATEGORIES[i % CATEGORIES.length]!, CATEGORIES[(i + 2) % CATEGORIES.length]!],
+      rating: randomRating(),
+      ratingCount: 8 + Math.floor(Math.random() * 40),
+      jobsCompleted: 15 + Math.floor(Math.random() * 80),
+      isOnline: i === 0 || i === 1 || i === 4 || i === 5 ? true : Math.random() > 0.3,
+      address: formatLocation(loc),
+      pincode: loc.pincode,
+      area: loc.name,
+      bio: 'Experienced professional with a focus on quality.',
+      avgResponseMin: 3 + Math.floor(Math.random() * 12),
+      verificationStatus: i < 8 ? 'approved' : i === 8 ? 'pending' : 'rejected',
+      availableSlots: availabilityFor(i),
+      g: {
+        geohash: encodeGeohash(loc.lat, loc.lng),
+        geopoint: locationToGeoPoint(loc),
+      },
+    }
+  })
 
   const requests: ServiceRequestDoc[] = Array.from({ length: 18 }, (_, i) => {
     // Deterministic assignments so the first demo worker (w0) always has:
@@ -131,6 +140,7 @@ function generateDemoData(): DemoStore {
     }
     const buildUpdates = (entries: [RequestStatus, number][]): JobUpdateDoc[] =>
       entries.map(([status, minutes]) => ({ status, timestamp: isoAgo(minutes) }))
+    const loc = seedLocation(i * 7 + 2)
     return {
       id: `r${i}`,
       customerId: `c${i % NAMES_C.length}`,
@@ -155,8 +165,10 @@ function generateDemoData(): DemoStore {
                   : i < 10
                     ? 'accepted'
                     : 'completed',
-      customerLocation: randomGeoPoint(),
-      customerAddress: ADDR[i % ADDR.length],
+      customerLocation: locationToGeoPoint(loc),
+      customerAddress: formatLocation(loc),
+      customerPincode: loc.pincode,
+      customerArea: loc.name,
       rejectedBy: [],
       jobUpdates:
         i < 5
@@ -320,6 +332,8 @@ export interface DemoAuthUser {
   phone?: string
   role: 'customer' | 'worker' | 'admin'
   adminRole?: 'superadmin' | 'support'
+  pincode?: string
+  area?: string
 }
 
 export function getDemoAuthUser(): DemoAuthUser | null {
@@ -369,7 +383,10 @@ export function demoSignUp(
       bio: 'Newly registered professional.',
       verificationStatus: 'pending',
       availableSlots: [],
-      g: { geohash: 't9fx2q1r7p0k', geopoint: randomGeoPoint() },
+      g: {
+        geohash: encodeGeohash(MADURAI_LOCATIONS[0]!.lat, MADURAI_LOCATIONS[0]!.lng),
+        geopoint: locationToGeoPoint(MADURAI_LOCATIONS[0]!),
+      },
     })
   }
   persistDemoStore(store)

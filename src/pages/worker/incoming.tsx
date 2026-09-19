@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { MapPin, Check, X, Clock3, Inbox, Hammer, Image as ImageIcon } from 'lucide-react'
+import { MapPin, Check, X, Clock3, Inbox, Hammer, Image as ImageIcon, Home, ListFilter } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkerIncoming, useWorkerJobs } from '@/hooks/use-requests'
 import { useWorkerProfile } from '@/hooks/use-workers'
@@ -16,6 +16,13 @@ import { useState } from 'react'
 import { timeAgoShort } from '@/lib/utils'
 import { haversine } from '@/lib/geo'
 
+const SORTS = [
+  ['nearby', MapPin, 'Nearby'],
+  ['same', Home, 'Same pincode'],
+  ['all', ListFilter, 'All Madurai'],
+] as const
+type SortKey = (typeof SORTS)[number][0]
+
 export default function WorkerIncoming() {
   const uid = useAuthStore((s) => s.uid)!
   const navigate = useNavigate()
@@ -23,10 +30,34 @@ export default function WorkerIncoming() {
   const { data: jobs } = useWorkerJobs(uid)
   const { data: profile } = useWorkerProfile(uid)
   const [busyId, setBusyId] = useState<string | null>(null)
+  const [sortBy, setSortBy] = useState<SortKey>('nearby')
 
   const activeJobs = (jobs ?? []).filter((j) =>
     ['accepted', 'on_the_way', 'arrived', 'in_progress'].includes(j.status),
   )
+
+  const sortedRequests = (requests ?? [])
+    .map((r) => {
+      const dist =
+        profile?.g?.geopoint && r.customerLocation
+          ? haversine(
+              { latitude: profile.g.geopoint.latitude, longitude: profile.g.geopoint.longitude },
+              { latitude: r.customerLocation.latitude, longitude: r.customerLocation.longitude },
+            )
+          : null
+      const samePincode = Boolean(profile?.pincode && r.customerPincode && profile.pincode === r.customerPincode)
+      return { r, dist, samePincode }
+    })
+    .sort((a, b) => {
+      if (sortBy === 'same') {
+        if (a.samePincode !== b.samePincode) return a.samePincode ? -1 : 1
+        return (a.dist ?? Infinity) - (b.dist ?? Infinity)
+      }
+      if (sortBy === 'nearby') {
+        return (a.dist ?? Infinity) - (b.dist ?? Infinity)
+      }
+      return new Date(b.r.createdAt).getTime() - new Date(a.r.createdAt).getTime()
+    })
 
   async function handle(action: 'accept' | 'reject', requestId: string) {
     setBusyId(requestId)
@@ -102,73 +133,115 @@ export default function WorkerIncoming() {
         />
       ) : (
         <div className="space-y-4">
-          {requests.map((r) => {
-            const dist = profile?.g?.geopoint && r.customerLocation
-              ? haversine(
-                  { latitude: profile.g.geopoint.latitude, longitude: profile.g.geopoint.longitude },
-                  { latitude: r.customerLocation.latitude, longitude: r.customerLocation.longitude },
-                )
-              : null
-            return (
-              <div key={r.id} className="paper-card paper-card-hover animate-list-in p-5">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h3 className="font-display text-lg font-semibold">{r.title}</h3>
-                    <p className="mt-0.5 flex items-center gap-1.5 text-sm text-muted-foreground">
-                      {r.customerName ?? 'Customer'} · {r.category}
-                      <CategoryIcon category={r.category} className="h-3.5 w-3.5" />
-                    </p>
-                  </div>
-                  <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-muted-foreground">
-                    <Clock3 className="h-3.5 w-3.5" /> {timeAgoShort(r.createdAt)} ago
-                  </span>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs font-medium text-muted-foreground">
+              {requests.length} incoming request{requests.length === 1 ? '' : 's'} —{' '}
+              {sortBy === 'nearby'
+                ? 'nearest first'
+                : sortBy === 'same'
+                  ? 'same-pincode requests first'
+                  : 'newest from across Madurai'}
+            </p>
+            <div className="relative flex items-center rounded-lg border border-border bg-muted/60 p-0.5">
+              <span
+                aria-hidden
+                className="absolute bottom-0.5 left-0.5 top-0.5 rounded-md bg-background shadow-sm transition-transform duration-300 ease-out"
+                style={{
+                  width: 'calc((100% - 4px) / 3)',
+                  transform: `translateX(${SORTS.findIndex(([k]) => k === sortBy) * 100}%)`,
+                }}
+              />
+              {SORTS.map(([key, Icon, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setSortBy(key)}
+                  className={`relative z-10 inline-flex flex-1 items-center justify-center gap-1.5 rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors cursor-pointer ${
+                    sortBy === key ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <Icon className={`h-3 w-3 ${sortBy === key ? 'text-primary' : ''}`} />
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {sortedRequests.map(({ r, dist, samePincode }) => (
+            <div key={r.id} className="paper-card paper-card-hover animate-list-in p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h3 className="font-display text-lg font-semibold">{r.title}</h3>
+                  <p className="mt-0.5 flex items-center gap-1.5 text-sm text-muted-foreground">
+                    {r.customerName ?? 'Customer'} · {r.category}
+                    <CategoryIcon category={r.category} className="h-3.5 w-3.5" />
+                  </p>
                 </div>
-
-                {r.description && <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{r.description}</p>}
-
-                {r.photoUrls && r.photoUrls.length > 0 && (
-                  <div className="mt-3 flex items-center gap-2">
-                    <ImageIcon className="h-3.5 w-3.5 text-muted-foreground" />
-                    <div className="flex gap-1.5 overflow-x-auto">
-                      {r.photoUrls.slice(0, 4).map((url, i) => (
-                        <a key={i} href={url} target="_blank" rel="noreferrer" className="block shrink-0 overflow-hidden rounded-lg border border-border">
-                          <img src={url} alt={`Photo ${i + 1}`} className="h-14 w-14 object-cover" />
-                        </a>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
-                  {dist && (
-                    <span className="flex items-center gap-1">
-                      <MapPin className="h-3.5 w-3.5" /> ~{dist} away
-                    </span>
-                  )}
-                  {r.customerAddress && <span className="truncate">{r.customerAddress}</span>}
-                </div>
-
-                <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-                  <Button
-                    className="flex-1 gap-2"
-                    disabled={busyId === r.id}
-                    onClick={() => handle('accept', r.id)}
-                  >
-                    {busyId === r.id ? <Spinner size={16} /> : <Check className="h-4 w-4" />}
-                    Accept & connect
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="flex-1 gap-2"
-                    disabled={busyId === r.id}
-                    onClick={() => handle('reject', r.id)}
-                  >
-                    <X className="h-4 w-4" /> Decline
-                  </Button>
-                </div>
+                <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-muted-foreground">
+                  <Clock3 className="h-3.5 w-3.5" /> {timeAgoShort(r.createdAt)} ago
+                </span>
               </div>
-            )
-          })}
+
+              {r.description && <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{r.description}</p>}
+
+              {r.photoUrls && r.photoUrls.length > 0 && (
+                <div className="mt-3 flex items-center gap-2">
+                  <ImageIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                  <div className="flex gap-1.5 overflow-x-auto">
+                    {r.photoUrls.slice(0, 4).map((url, i) => (
+                      <a key={i} href={url} target="_blank" rel="noreferrer" className="block shrink-0 overflow-hidden rounded-lg border border-border">
+                        <img src={url} alt={`Photo ${i + 1}`} className="h-14 w-14 object-cover" />
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
+                {dist && (
+                  <span className="flex items-center gap-1">
+                    <MapPin className="h-3.5 w-3.5" /> ~{(dist / 1000).toFixed(1)} km away
+                  </span>
+                )}
+                {samePincode && (
+                  <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700">
+                    same pincode as you
+                  </span>
+                )}
+                {r.customerArea && (
+                  <span className="inline-flex items-center gap-1">
+                    <MapPin className="h-3.5 w-3.5 text-primary/70" />
+                    {r.customerArea}
+                    {r.customerPincode && (
+                      <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] font-medium text-muted-foreground/80">
+                        {r.customerPincode}
+                      </span>
+                    )}
+                  </span>
+                )}
+                {r.customerAddress && !r.customerArea && <span className="truncate">{r.customerAddress}</span>}
+              </div>
+
+              <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                <Button
+                  className="flex-1 gap-2"
+                  disabled={busyId === r.id}
+                  onClick={() => handle('accept', r.id)}
+                >
+                  {busyId === r.id ? <Spinner size={16} /> : <Check className="h-4 w-4" />}
+                  Accept & connect
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex-1 gap-2"
+                  disabled={busyId === r.id}
+                  onClick={() => handle('reject', r.id)}
+                >
+                  <X className="h-4 w-4" /> Decline
+                </Button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>

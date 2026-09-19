@@ -40,6 +40,8 @@ export const serviceRequestSchema = new Schema({
     coordinates: { type: [Number], required: true },
   },
   customerAddress: { type: String, default: null },
+  customerPincode: { type: String, default: null },
+  customerArea: { type: String, default: null },
   rejectedBy: { type: [String], default: [] },
   ratingGiven: { type: Boolean, default: false },
   bill: {
@@ -99,6 +101,8 @@ export interface RequestDoc {
   jobUpdates?: RequestJobUpdate[]
   customerLocation: LatLng
   customerAddress?: string
+  customerPincode?: string
+  customerArea?: string
   rejectedBy: string[]
   ratingGiven?: boolean
   bill?: { productsCost: number; laborWage: number; total: number; note?: string; createdAt?: string }
@@ -134,6 +138,8 @@ export function toRequestDoc(r: ServiceRequestModel & { _id: unknown }): Request
     })),
     customerLocation: { latitude: lat, longitude: lng },
     customerAddress: r.customerAddress ?? undefined,
+    customerPincode: r.customerPincode ?? undefined,
+    customerArea: r.customerArea ?? undefined,
     rejectedBy: r.rejectedBy ?? [],
     ratingGiven: r.ratingGiven ?? false,
     bill: r.bill

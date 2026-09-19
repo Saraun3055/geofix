@@ -12,7 +12,9 @@ import { useCurrentLocation, DEFAULT_LOCATION } from '@/hooks/use-geo'
 import { createRequest } from '@/services/requests.service'
 import { uploadPhotos, readAsDataUrl } from '@/lib/storage'
 import { CATEGORY_LIST, SUBCATEGORIES_MAP, type ServiceCategory } from '@/lib/types'
+import { formatLocation, getLocationByPincode, searchMaduraiLocations, type MaduraiLocation } from '@/lib/madurai-locations'
 import { isDemo } from '@/lib/mode'
+import { PincodeLocationPicker } from '@/components/pincode-location-picker'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -33,11 +35,17 @@ export default function CustomerNewRequest() {
   const [params] = useSearchParams()
   const uid = useAuthStore((s) => s.uid)!
   const name = useAuthStore((s) => s.name) ?? 'Customer'
+  const homePincode = useAuthStore((s) => s.pincode)
 
   const [category, setCategory] = useState(params.get('category') ?? '')
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [address, setAddress] = useState('')
+  const [streetAddress, setStreetAddress] = useState('')
+  const [region, setRegion] = useState<MaduraiLocation | null>(() =>
+    getLocationByPincode(homePincode ?? '') ??
+      (homePincode ? searchMaduraiLocations(homePincode, 1)[0] : undefined) ??
+      null,
+  )
   const [files, setFiles] = useState<File[]>([])
   const [previews, setPreviews] = useState<string[]>([])
   const [busy, setBusy] = useState(false)
@@ -53,8 +61,10 @@ export default function CustomerNewRequest() {
 
   // In demo mode we pin to the seeded demo city (Madurai) so nearby workers
   // always show up — no browser permission prompt, no empty radius.
-  const { coords: geoCoords, loading: geoLoading, error: geoError } = useCurrentLocation(!isDemo)
-  const coords = isDemo ? DEFAULT_LOCATION : geoCoords ?? DEFAULT_LOCATION
+  const { coords: geoCoords, loading: geoLoading, error: geoError } = useCurrentLocation(!isDemo && !region)
+  const coords = region
+    ? { lat: region.lat, lng: region.lng }
+    : (geoCoords ?? DEFAULT_LOCATION)
 
   async function handleFiles(newFiles: File[]) {
     const urls: string[] = []
@@ -82,7 +92,9 @@ export default function CustomerNewRequest() {
         description: description.trim(),
         photoUrls,
         location: { latitude: coords.lat, longitude: coords.lng },
-        address: address.trim() || undefined,
+        address: streetAddress.trim() || (region ? formatLocation(region) : undefined),
+        pincode: region?.pincode,
+        area: region?.name,
       })
       toastSuccess('Request created', 'Now choose a nearby worker')
       navigate(`/customer/new/workers?request=${id}`)
@@ -98,7 +110,7 @@ export default function CustomerNewRequest() {
         <span className="eyebrow">New repair request</span>
         <h1 className="mt-2 font-display text-3xl font-bold tracking-tight">What needs fixing in Madurai?</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Pick a category — Simmakkal, Anna Nagar, KK Nagar, Goripalayam & more. Add a photo for faster fixes.
+          Pick a category and tell us your pincode — we'll match you with the best-rated nearby workers in Madurai.
         </p>
       </div>
 
@@ -219,28 +231,35 @@ export default function CustomerNewRequest() {
                 <MapPin className="h-4 w-4" />
               </span>
               <div>
-                <p className="text-sm font-semibold">Location</p>
+                <p className="text-sm font-semibold">Where in Madurai?</p>
                 <p className="text-xs text-muted-foreground">
-                  {geoLoading
-                    ? 'Detecting…'
-                    : coords === DEFAULT_LOCATION
-                      ? 'Using default — update below'
-                      : `Lat ${coords.lat.toFixed(4)}, Lng ${coords.lng.toFixed(4)}`}
+                  {region
+                    ? `Selected: ${formatLocation(region)}`
+                    : geoLoading
+                      ? 'Detecting…'
+                      : 'Pick your pincode & area below'}
                 </p>
               </div>
             </div>
           </div>
           <div className="mt-3">
+            <PincodeLocationPicker
+              value={region}
+              onChange={setRegion}
+              placeholder="Search pincode or area (e.g. 625706, Simmakkal)"
+            />
+          </div>
+          <div className="mt-3">
             <Input
               placeholder="Street address or landmark (for the worker)"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
+              value={streetAddress}
+              onChange={(e) => setStreetAddress(e.target.value)}
               className="h-10"
             />
           </div>
           {geoError && (
             <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
-              {geoError} You can still submit with the coordinates shown, or type an address manually.
+              {geoError} You can still submit with the coordinates shown, or pick an area above.
             </p>
           )}
         </div>

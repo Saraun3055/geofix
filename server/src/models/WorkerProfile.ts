@@ -26,6 +26,8 @@ export const workerProfileSchema = new Schema(
     jobsCompleted: { type: Number, default: 0 },
     isOnline: { type: Boolean, default: false },
     address: { type: String, default: '' },
+    pincode: { type: String, default: null },
+    area: { type: String, default: null },
     bio: { type: String, default: '' },
     avgResponseMin: { type: Number, default: 0 },
     govIdUrl: { type: String, default: '' },
@@ -67,6 +69,8 @@ export interface WorkerDoc {
   jobsCompleted: number
   isOnline: boolean
   address: string
+  pincode: string | null
+  area: string | null
   bio: string
   avgResponseMin: number
   govIdUrl: string
@@ -92,6 +96,8 @@ export function toWorkerDoc(w: WorkerProfileModel & { _id: unknown }, distanceMe
     jobsCompleted: w.jobsCompleted ?? 0,
     isOnline: w.isOnline ?? false,
     address: w.address ?? '',
+    pincode: (w.pincode as string | null | undefined) ?? null,
+    area: (w.area as string | null | undefined) ?? null,
     bio: w.bio ?? '',
     avgResponseMin: w.avgResponseMin ?? 0,
     govIdUrl: w.govIdUrl ?? '',

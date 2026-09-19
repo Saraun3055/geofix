@@ -3,14 +3,17 @@ import { isLocalApi } from '@/lib/mode'
 import { updateMyProfileApi } from '@/services/local-api'
 import { useAuthStore } from '@/stores/auth'
 
-export type ProfileEdits = { name?: string; phone?: string }
+export type ProfileEdits = { name?: string; phone?: string; pincode?: string; area?: string }
 
 /** Update the signed-in user's display name / phone, in both data modes. */
 export async function updateMyProfile(data: ProfileEdits): Promise<boolean> {
   if (isLocalApi) {
     const user = await updateMyProfileApi(data)
     if (!user) return false
-    useAuthStore.getState().applyProfile(user.name, user.phone ?? '')
+    useAuthStore.getState().applyProfile(user.name, user.phone ?? '', {
+      pincode: user.pincode ?? null,
+      area: user.area ?? null,
+    })
     return true
   }
 
@@ -19,7 +22,13 @@ export async function updateMyProfile(data: ProfileEdits): Promise<boolean> {
 
   const nextName = (data.name?.trim() || authUser.name).trim()
   const nextPhone = (data.phone?.trim() || authUser.phone || '').trim()
-  const next = { ...authUser, name: nextName, phone: nextPhone || authUser.phone }
+  const next = {
+    ...authUser,
+    name: nextName,
+    phone: nextPhone || authUser.phone,
+    pincode: data.pincode ?? authUser.pincode,
+    area: data.area ?? authUser.area,
+  }
   setDemoAuthUser(next)
 
   if (authUser.role === 'worker') {
@@ -32,6 +41,9 @@ export async function updateMyProfile(data: ProfileEdits): Promise<boolean> {
     }
   }
 
-  useAuthStore.getState().applyProfile(next.name, next.phone)
+  useAuthStore.getState().applyProfile(next.name, next.phone, {
+    pincode: next.pincode ?? null,
+    area: next.area ?? null,
+  })
   return true
 }

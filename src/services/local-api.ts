@@ -47,6 +47,8 @@ type RawUser = {
   adminRole?: string
   createdAt?: string
   photoUrl?: string
+  pincode?: string
+  area?: string
 }
 
 function toUserDoc(u: RawUser): UserDoc {
@@ -57,6 +59,8 @@ function toUserDoc(u: RawUser): UserDoc {
     phone: u.phone as string | undefined,
     role: (u.role ?? 'customer') as UserDoc['role'],
     adminRole: (u.adminRole as UserDoc['adminRole']) ?? undefined,
+    pincode: u.pincode as string | undefined,
+    area: u.area as string | undefined,
     createdAt: (u.createdAt ?? new Date().toISOString()) as string,
   }
 }
@@ -108,7 +112,7 @@ export async function apiMe(): Promise<UserDoc | null> {
 }
 
 /* ──────────────────── Profile ──────────────────── */
-export async function updateMyProfileApi(data: { name?: string; phone?: string }): Promise<UserDoc | null> {
+export async function updateMyProfileApi(data: { name?: string; phone?: string; pincode?: string; area?: string }): Promise<UserDoc | null> {
   try {
     const updated = await api.patch<RawUser>('/users/me', data)
     return toUserDoc(updated)
@@ -153,7 +157,7 @@ export async function setWorkerAvailability(userId: string, isOnline: boolean): 
 
 export async function updateWorkerProfileApi(
   userId: string,
-  data: { categorySkills: string[]; availableSlots: { day: string; from: string; to: string }[] },
+  data: { categorySkills: string[]; availableSlots: { day: string; from: string; to: string }[]; address?: string; pincode?: string; area?: string },
 ): Promise<WorkerProfileDoc> {
   return api.patch<WorkerProfileDoc>(`/workers/${encodeURIComponent(userId)}/profile`, data)
 }
@@ -178,6 +182,8 @@ export async function createApiRequest(
     photoUrls: string[]
     location: GeoPointLike
     address?: string
+    pincode?: string
+    area?: string
     whatsappNumber?: string
   },
 ): Promise<string> {
@@ -190,6 +196,8 @@ export async function createApiRequest(
     photoUrls: data.photoUrls,
     location: { latitude: data.location.latitude, longitude: data.location.longitude },
     address: data.address,
+    pincode: data.pincode,
+    area: data.area,
     whatsappNumber: data.whatsappNumber,
   })
   if (res && typeof res === 'object' && 'id' in res && res.id) return res.id

@@ -13,6 +13,10 @@ import { MapView, type MapMarker } from '@/components/map-view'
 
 import { toastError, toastSuccess } from '@/hooks/use-toast'
 import { haversine } from '@/lib/geo'
+import {
+  getNearbyLocations,
+  MADURAI_CENTER,
+} from '@/lib/madurai-locations'
 import { cn } from '@/lib/utils'
 import type { WorkerProfileDoc } from '@/lib/types'
 
@@ -48,18 +52,28 @@ export default function CustomerWorkers() {
 
   const workers = useMemo(() => {
     if (!allWorkers) return null
-    return allWorkers
-      .filter((w) => !excludeIds.has(w.userId) && (!category || w.categorySkills.some((s) => s.toLowerCase() === category)))
-      .sort((a, b) => {
-        if (sortBy === 'nearby' && customerLocation) {
-          return haversine(customerLocation, a.g.geopoint) - haversine(customerLocation, b.g.geopoint)
-        }
-        if (sortBy === 'fast') {
-          return (a.avgResponseMin ?? 1e9) - (b.avgResponseMin ?? 1e9)
-        }
-        return b.rating - a.rating
-      })
-  }, [allWorkers, excludeIds, category, sortBy, customerLocation])
+    let list = allWorkers.filter(
+      (w) => !excludeIds.has(w.userId) && (!category || w.categorySkills.some((s) => s.toLowerCase() === category)),
+    )
+    if (sortBy === 'nearby' && customerLocation) {
+      // Nearby shows the workers whose areas are inside the 10 closest
+      // pincodes/locations to the customer, then orders them by distance.
+      const nearbyPins = new Set(getNearbyLocations(request?.customerPincode ?? request?.customerArea ?? '', 10).map((n) => n.location.pincode))
+      if (nearbyPins.size > 0) {
+        const inNearby = list.filter((w) => w.pincode && nearbyPins.has(w.pincode))
+        if (inNearby.length > 0) list = inNearby
+      }
+    }
+    return [...list].sort((a, b) => {
+      if (sortBy === 'nearby' && customerLocation) {
+        return haversine(customerLocation, a.g.geopoint) - haversine(customerLocation, b.g.geopoint)
+      }
+      if (sortBy === 'fast') {
+        return (a.avgResponseMin ?? 1e9) - (b.avgResponseMin ?? 1e9)
+      }
+      return b.rating - a.rating
+    })
+  }, [allWorkers, excludeIds, category, sortBy, customerLocation, request?.customerPincode, request?.customerArea])
 
   const [busyWorker, setBusyWorker] = useState<string | null>(null)
   const [activeWorkerId, setActiveWorkerId] = useState<string | null>(null)
@@ -86,7 +100,7 @@ export default function CustomerWorkers() {
       return { lat: customerLocation.latitude, lng: customerLocation.longitude }
     }
     const m = mapMarkers[0]
-    return m ? { lat: m.lat, lng: m.lng } : { lat: 28.6139, lng: 77.209 }
+    return m ? { lat: m.lat, lng: m.lng } : { lat: MADURAI_CENTER.lat, lng: MADURAI_CENTER.lng }
   }, [customerLocation, mapMarkers])
 
   function handleMarkerSelect(workerId: string) {
@@ -195,10 +209,10 @@ export default function CustomerWorkers() {
             <p className="text-xs font-medium text-muted-foreground">
               {workers.length} professional{workers.length === 1 ? '' : 's'} found —{' '}
               {sortBy === 'nearby'
-                ? 'nearest first'
+                ? 'nearest first (top 10 nearby areas)'
                 : sortBy === 'fast'
                   ? 'fastest response time'
-                  : 'sorted by rating'}
+                  : 'sorted by rating (default)'}
             </p>
             <div className="relative flex items-center rounded-lg border border-border bg-muted/60 p-0.5">
               <span
@@ -222,6 +236,9 @@ export default function CustomerWorkers() {
                     className={`h-3 w-3 ${sortBy === key ? 'text-primary' : ''}`}
                   />
                   {label}
+                  {key === 'rating' && sortBy === 'rating' && (
+                    <span className="font-normal text-muted-foreground">· default</span>
+                  )}
                 </button>
               ))}
             </div>
@@ -262,6 +279,20 @@ export default function CustomerWorkers() {
                     <CategoryIcon category={worker.categorySkills[0] ?? ''} className="h-3.5 w-3.5" />
                     {worker.categorySkills.join(' · ')}
                   </p>
+                  {worker.area && worker.pincode && (
+                    <p className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <MapPin className="h-3 w-3 text-primary/70" />
+                      {worker.area}
+                      <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] font-medium text-muted-foreground/80">
+                        {worker.pincode}
+                      </span>
+                      {request?.customerPincode === worker.pincode && (
+                        <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700">
+                          same pincode
+                        </span>
+                      )}
+                    </p>
+                  )}
                   <div className="mt-1.5 flex flex-wrap items-center gap-3 text-sm">
                     <span className="flex items-center gap-1.5 font-semibold">
                       <Stars value={worker.rating} size={14} />

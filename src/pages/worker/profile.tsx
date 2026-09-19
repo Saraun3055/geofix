@@ -16,6 +16,8 @@ import { updateMyProfile } from '@/services/profile.service'
 import { toastSuccess, toastError } from '@/hooks/use-toast'
 import { CATEGORY_LIST, type AvailabilitySlot } from '@/lib/types'
 import { cn } from '@/lib/utils'
+import { PincodeLocationPicker } from '@/components/pincode-location-picker'
+import { getLocationByPincode, searchMaduraiLocations, type MaduraiLocation } from '@/lib/madurai-locations'
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
@@ -41,6 +43,7 @@ export default function WorkerProfile() {
   const [phoneInput, setPhoneInput] = useState(phone ?? '')
   const [skills, setSkills] = useState<string[]>([])
   const [slots, setSlots] = useState<AvailabilitySlot[]>([])
+  const [region, setRegion] = useState<MaduraiLocation | null>(null)
   const [newDay, setNewDay] = useState('Mon')
   const [newFrom, setNewFrom] = useState('09:00')
   const [newTo, setNewTo] = useState('13:00')
@@ -51,6 +54,11 @@ export default function WorkerProfile() {
     if (profile && !editing) {
       setSkills([...(profile.categorySkills ?? [])])
       setSlots([...(profile.availableSlots ?? [])])
+      setRegion(
+        getLocationByPincode(profile.pincode ?? '') ??
+          (profile.pincode ? searchMaduraiLocations(profile.pincode, 1)[0] : undefined) ??
+          null,
+      )
     }
   }, [profile?.userId, editing])
 
@@ -68,6 +76,11 @@ export default function WorkerProfile() {
     if (profile) {
       setSkills([...(profile.categorySkills ?? [])])
       setSlots([...(profile.availableSlots ?? [])])
+      setRegion(
+        getLocationByPincode(profile.pincode ?? '') ??
+          (profile.pincode ? searchMaduraiLocations(profile.pincode, 1)[0] : undefined) ??
+          null,
+      )
     }
     setEditing(true)
   }
@@ -95,7 +108,13 @@ export default function WorkerProfile() {
     setSaving(true)
     const [detailsOk, profileOk] = await Promise.all([
       updateMyProfile({ name: nameInput, phone: phoneInput }),
-      updateWorkerProfile(uid, { categorySkills: skills, availableSlots: slots }),
+      updateWorkerProfile(uid, {
+        categorySkills: skills,
+        availableSlots: slots,
+        address: region ? `${region.name}, ${region.pincode} · Madurai, Tamil Nadu` : profile?.address ?? '',
+        pincode: region?.pincode,
+        area: region?.name,
+      }),
     ])
     setSaving(false)
     if (detailsOk && profileOk) {
@@ -134,7 +153,19 @@ export default function WorkerProfile() {
         <CardContent className="space-y-4 text-sm">
           <div className="flex flex-wrap gap-3 text-muted-foreground">
             <span className="flex items-center gap-2">
-              <MapPin className="h-4 w-4" /> {profile?.address ?? 'Location shared per job'}
+              <MapPin className="h-4 w-4" />
+              {profile?.area ? (
+                <>
+                  {profile.area}
+                  {profile.pincode && (
+                    <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] font-medium text-muted-foreground/80">
+                      {profile.pincode}
+                    </span>
+                  )}
+                </>
+              ) : (
+                profile?.address ?? 'Location shared per job'
+              )}
             </span>
             <span className="flex items-center gap-2">
               <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
@@ -179,6 +210,21 @@ export default function WorkerProfile() {
                   </Label>
                   <Input id="worker-phone" value={phoneInput} onChange={(e) => setPhoneInput(e.target.value)} placeholder="+91…" className="h-10" />
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1.5">
+                  <MapPin className="h-3.5 w-3.5" /> Home / service area
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Customers nearby search by pincode & area — this is how they find you.
+                </p>
+                <PincodeLocationPicker value={region} onChange={setRegion} hideNearby />
+                {!region && profile?.pincode && (
+                  <p className="text-xs text-muted-foreground">
+                    Currently {profile.pincode} — {profile.area ?? ''}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -258,7 +304,7 @@ export default function WorkerProfile() {
             </Button>
           ) : (
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => { setEditing(false); setNameInput(name); setPhoneInput(phone ?? ''); if (profile) { setSkills([...profile.categorySkills]); setSlots([...profile.availableSlots ?? []]) } }}>Cancel</Button>
+              <Button variant="outline" size="sm" onClick={() => { setEditing(false); setNameInput(name); setPhoneInput(phone ?? ''); if (profile) { setSkills([...profile.categorySkills]); setSlots([...profile.availableSlots ?? []]); setRegion(getLocationByPincode(profile.pincode ?? '') ?? null) } }}>Cancel</Button>
               <Button size="sm" onClick={save} disabled={saving}>
                 {saving ? <><Loader2 className="h-4 w-4 animate-spin" /> Saving…</> : 'Save changes'}
               </Button>

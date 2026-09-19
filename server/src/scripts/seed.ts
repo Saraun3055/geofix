@@ -14,7 +14,66 @@ import { connectDb, disconnectDb } from '../config/db'
 const CATEGORIES = ['Plumbing', 'Electrical', 'Carpentry', 'Painting', 'Appliance', 'Locksmith', 'AC / HVAC', 'General']
 const NAMES_W = ['Rajan Kumar', 'Yusuf Idris', 'Miguel Santos', 'Ravi Sharma', 'Jamal Benson', 'Anna Nowak', 'Diego Morales', 'Hassan Patel', 'Luca Bertoni', 'Tariq Osman']
 const ONLINE_INDEXES = new Set([0, 1, 4, 5])
-const BASE = { lat: 28.6139, lng: 77.209 }
+
+/** Madurai region dataset (mirrors `src/lib/madurai-locations.ts`). */
+const MADURAI_META: Array<[name: string, pincode: string, lat: number, lng: number]> = [
+  ['Simmakkal', '625001', 9.922, 78.119],
+  ['Tallakulam', '625002', 9.934, 78.131],
+  ['Madakkulam', '625002', 9.947, 78.132],
+  ['Kudakoil', '625003', 9.952, 78.146],
+  ['Koodal Nagar', '625003', 9.964, 78.15],
+  ['Ponmeni', '625004', 9.942, 78.153],
+  ['Arasaradi', '625004', 9.93, 78.146],
+  ['Anna Nagar', '625020', 9.958, 78.117],
+  ['K Pudur', '625007', 9.927, 78.109],
+  ['Sivanandanagar', '625007', 9.916, 78.104],
+  ['Kappalur', '625008', 9.904, 78.09],
+  ['Krishnapuram', '625009', 9.938, 78.1],
+  ['Vilakkuthoon', '625001', 9.927, 78.123],
+  ['Goripalayam', '625002', 9.929, 78.127],
+  ['Melur', '625106', 10.032, 78.339],
+  ['Kottampatti', '625103', 10.077, 78.218],
+  ['Thiruparankundram', '625005', 9.883, 78.071],
+  ['Pasumalai', '625005', 9.91, 78.083],
+  ['Tirunagar', '625015', 9.895, 78.116],
+  ['Avaniapuram', '625012', 9.861, 78.113],
+  ['Anuppanady', '625012', 9.872, 78.093],
+  ['Jaihindpuram', '625011', 9.9, 78.145],
+  ['Kalimangalam', '625016', 9.937, 78.03],
+  ['Anaiyur', '625017', 9.897, 78.076],
+  ['Podumbu', '625022', 9.878, 78.143],
+  ['Karuvanur', '625018', 9.90, 78.177],
+  ['Kathiathur', '625019', 9.912, 78.209],
+  ['Vellaigundam', '625021', 9.934, 78.071],
+  ['Madras High Court Madurai Bench', '625023', 9.922, 78.118],
+  ['Samayanallur', '625402', 9.992, 78.005],
+  ['Paravai', '625402', 9.906, 78.085],
+  ['Alagarkoil', '625301', 10.091, 78.213],
+  ['Alanganallur', '625501', 10.035, 78.101],
+  ['Palamedu', '625503', 10.067, 78.148],
+  ['Checkanurani', '625514', 10.112, 78.006],
+  ['Usilampatti', '625532', 9.967, 77.801],
+  ['Vadipatti', '625218', 10.084, 77.965],
+  ['Sholavandan', '625214', 9.979, 77.873],
+  ['Silaiman', '625201', 9.966, 78.006],
+  ['Chellampatti', '625514', 10.062, 78.022],
+  ['Tiruvedagam', '625234', 10.012, 77.903],
+  ['Tirumangalam', '625706', 9.81, 77.983],
+  ['T Kallupatti', '625702', 9.723, 77.976],
+  ['Peraiyur', '625703', 9.722, 77.791],
+  ['Kalligudi', '625701', 9.833, 77.952],
+  ['Saptur', '625705', 9.776, 77.844],
+  ['Villur', '625707', 9.808, 77.711],
+]
+
+function maduraiLocation(index: number) {
+  return MADURAI_META[(index * 37 + 5) % MADURAI_META.length]!
+}
+
+function maduraiArea(loc: { readonly 0: string; readonly 1: string }): string {
+  return `${loc[0]}, ${loc[1]} · Madurai, Tamil Nadu`
+}
+
 const REVIEWS = [
   'Very professional, fixed the leak quickly.',
   'Great work! Arrived on time and cleaned up after.',
@@ -59,6 +118,24 @@ async function upsertAdmin(email: string, password: string, name: string, adminR
 async function seed() {
   await connectDb()
   const reset = process.argv.includes('--reset')
+  const force = process.argv.includes('--force')
+
+  // ── Real-user protection ────────────────────────────────────────────
+  // Exactly one demo user was lost to a --reset re-seed, so the seed is now
+  // deliberately destructive only when forced. Losing real data again means
+  // a manual Mongo restore, which the free Atlas tier does not provide.
+  const DEMO_EMAIL_RE = /@(geofix\.app|demo\.geofix)$/i
+  const realUsers = await User.exists({ email: { $not: DEMO_EMAIL_RE } })
+  if (realUsers && !force) {
+    console.error(
+      '[seed] BLOCKED: real (non-demo) users exist in the database.\n' +
+        '  - Plain `npm run seed` deletes requests/ratings/audit-log (their history) every run.\n' +
+        '  - Adding `--reset` would also delete every registered account.\n' +
+        '  Nothing will be deleted. If you intentionally want to wipe real data, run with --force.',
+    )
+    await disconnectDb()
+    return
+  }
 
   // Users + worker profiles are upserted by email/userId so they stay stable
   // across runs. The child collections are rebuilt every run — otherwise a
@@ -102,7 +179,8 @@ async function seed() {
     seedWorkerProfiles.push({ userId, name: w.user.name, isOnline: ONLINE_INDEXES.has(i), categorySkills })
   })
 
-  for (const p of seedWorkerProfiles) {
+for (const [i, p] of seedWorkerProfiles.entries()) {
+    const loc = maduraiLocation(i * 3)
     await WorkerProfile.updateOne(
       { userId: p.userId },
       {
@@ -114,7 +192,9 @@ async function seed() {
         ratingCount: 3 + Math.floor(Math.random() * 15),
         jobsCompleted: 2 + Math.floor(Math.random() * 20),
         isOnline: p.isOnline,
-        address: '1 Home Street, Local City',
+        address: maduraiArea(loc),
+        pincode: loc[1],
+        area: loc[0],
         bio: 'Reliable professional with local experience.',
         avgResponseMin: 5 + Math.floor(Math.random() * 20),
         verificationStatus: 'approved',
@@ -124,12 +204,13 @@ async function seed() {
               { day: ['Mon', 'Wed', 'Fri'][p.userId.charCodeAt(1) % 3]!, from: '09:00', to: '13:00' },
               { day: ['Tue', 'Thu', 'Sat'][p.userId.charCodeAt(1) % 3]!, from: '16:00', to: '20:00' },
             ],
-        location: { type: 'Point', coordinates: [BASE.lng + (Math.random() - 0.5) * 0.16, BASE.lat + (Math.random() - 0.5) * 0.16] },
+        location: { type: 'Point', coordinates: [loc[3], loc[2]] },
       },
       { upsert: true },
     )
   }
   // Demo worker account profile (General skills, online).
+  const demoLoc = maduraiLocation(3)
   await WorkerProfile.updateOne(
     { userId: demoWorkerUser._id.toString() },
     {
@@ -141,20 +222,23 @@ async function seed() {
       ratingCount: 12,
       jobsCompleted: 9,
       isOnline: true,
-      address: '55 Demo Street, Local City',
+      address: maduraiArea(demoLoc),
+      pincode: demoLoc[1],
+      area: demoLoc[0],
       bio: 'Demo worker account for local testing.',
       avgResponseMin: 8,
-verificationStatus: 'approved',
+    verificationStatus: 'approved',
     availableSlots: [
       { day: 'Tue', from: '09:00', to: '13:00' },
       { day: 'Thu', from: '16:00', to: '20:00' },
     ],
-    location: { type: 'Point', coordinates: [BASE.lng + 0.02, BASE.lat + 0.01] },
+    location: { type: 'Point', coordinates: [demoLoc[3], demoLoc[2]] },
     },
     { upsert: true },
   )
 
   // Requests (replaceable bundle so re-seeding stays consistent).
+  const requestLocs = [0, 6, 11, 3, 8].map((n) => maduraiLocation(n * 7 + 2))
   const requests = await ServiceRequest.create([
     {
       customerId: customerUser._id.toString(),
@@ -164,8 +248,10 @@ verificationStatus: 'approved',
       description: 'Water pooling under the sink, looks like a broken pipe joint.',
       photoUrls: [],
       status: 'searching',
-      customerLocation: { type: 'Point', coordinates: [BASE.lng + 0.005, BASE.lat + 0.004] },
-      customerAddress: '12 Maple Grove, Old Town',
+      customerLocation: { type: 'Point', coordinates: [requestLocs[0]![3], requestLocs[0]![2]] },
+      customerAddress: maduraiArea(requestLocs[0]!),
+      customerPincode: requestLocs[0]![1],
+      customerArea: requestLocs[0]![0],
       rejectedBy: [],
       createdAt: isoAgo(8),
       updatedAt: isoAgo(8),
@@ -178,8 +264,10 @@ verificationStatus: 'approved',
       description: 'Ceiling fan makes noise and wobbles at high speed.',
       photoUrls: [],
       status: 'pending_worker_response',
-      customerLocation: { type: 'Point', coordinates: [BASE.lng - 0.01, BASE.lat + 0.01] },
-      customerAddress: '44 Riverbend Rd, Greenfield',
+      customerLocation: { type: 'Point', coordinates: [requestLocs[1]![3], requestLocs[1]![2]] },
+      customerAddress: maduraiArea(requestLocs[1]!),
+      customerPincode: requestLocs[1]![1],
+      customerArea: requestLocs[1]![0],
       rejectedBy: [],
       workerId: seedWorkerProfiles[1]?.userId,
       workerName: seedWorkerProfiles[1]?.name,
@@ -194,8 +282,10 @@ verificationStatus: 'approved',
       description: 'AC blows warm air after a few minutes.',
       photoUrls: [],
       status: 'accepted',
-      customerLocation: { type: 'Point', coordinates: [BASE.lng + 0.02, BASE.lat - 0.01] },
-      customerAddress: '81 King St, Harborview',
+      customerLocation: { type: 'Point', coordinates: [requestLocs[2]![3], requestLocs[2]![2]] },
+      customerAddress: maduraiArea(requestLocs[2]!),
+      customerPincode: requestLocs[2]![1],
+      customerArea: requestLocs[2]![0],
       rejectedBy: [],
       workerId: seedWorkerProfiles[4]?.userId,
       workerName: seedWorkerProfiles[4]?.name,
@@ -212,8 +302,10 @@ verificationStatus: 'approved',
       description: 'Door lock jammed, need urgent help.',
       photoUrls: [],
       status: 'completed',
-      customerLocation: { type: 'Point', coordinates: [BASE.lng + 0.015, BASE.lat + 0.008] },
-      customerAddress: '7 Oak Lane, Meadowlands',
+      customerLocation: { type: 'Point', coordinates: [requestLocs[3]![3], requestLocs[3]![2]] },
+      customerAddress: maduraiArea(requestLocs[3]!),
+      customerPincode: requestLocs[3]![1],
+      customerArea: requestLocs[3]![0],
       rejectedBy: [],
       workerId: seedWorkerProfiles[5]?.userId,
       workerName: seedWorkerProfiles[5]?.name,
@@ -236,8 +328,10 @@ verificationStatus: 'approved',
       description: 'Loud rumbling during spin cycle.',
       photoUrls: [],
       status: 'completed',
-      customerLocation: { type: 'Point', coordinates: [BASE.lng - 0.02, BASE.lat + 0.012] },
-      customerAddress: '29 Hillcrest Ave, Rosewood',
+      customerLocation: { type: 'Point', coordinates: [requestLocs[4]![3], requestLocs[4]![2]] },
+      customerAddress: maduraiArea(requestLocs[4]!),
+      customerPincode: requestLocs[4]![1],
+      customerArea: requestLocs[4]![0],
       rejectedBy: [],
       workerId: seedWorkerProfiles[2]?.userId,
       workerName: seedWorkerProfiles[2]?.name,
