@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   Camera,
@@ -258,7 +258,7 @@ export default function CustomerNewRequest() {
             />
           </div>
           {geoError && (
-            <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            <p className="mt-2 rounded-lg bg-caramel-50 px-3 py-2 text-xs text-caramel-800">
               {geoError} You can still submit with the coordinates shown, or pick an area above.
             </p>
           )}
@@ -274,7 +274,7 @@ export default function CustomerNewRequest() {
             className="group gap-2 px-6 btn-shine"
             size="lg"
           >
-            {busy ? <Spinner size={18} /> : <Star className="h-4 w-4 fill-amber-300 text-amber-300 drop-shadow-[0_1px_4px_rgba(242,162,60,0.55)]" />}
+            {busy ? <Spinner size={18} /> : <Star className="h-4 w-4 fill-caramel-300 text-caramel-300 drop-shadow-[0_1px_4px_rgba(140,36,37,0.5)]" />}
             {busy ? 'Submitting…' : 'Find workers based on rating'}
             {!busy && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />}
           </Button>
@@ -283,3 +283,4 @@ export default function CustomerNewRequest() {
     </div>
   )
 }
+

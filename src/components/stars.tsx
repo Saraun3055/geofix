@@ -1,4 +1,4 @@
-import { Star, StarHalf } from 'lucide-react'
+﻿import { Star, StarHalf } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export function Stars({
@@ -23,7 +23,7 @@ export function Stars({
               key={i}
               width={size}
               height={size}
-              className="fill-amber-400 text-amber-400 drop-shadow-[0_1px_3px_rgba(245,158,11,0.45)] transition-transform duration-300 group-hover:scale-110"
+              className="fill-caramel-400 text-caramel-400 drop-shadow-[0_1px_3px_rgba(140,36,37,0.45)] transition-transform duration-300 group-hover:scale-110"
             />
           )
         }
@@ -33,7 +33,7 @@ export function Stars({
               key={i}
               width={size}
               height={size}
-              className="fill-amber-400 text-amber-400 drop-shadow-[0_1px_3px_rgba(245,158,11,0.45)] transition-transform duration-300 group-hover:scale-110"
+              className="fill-caramel-400 text-caramel-400 drop-shadow-[0_1px_3px_rgba(140,36,37,0.45)] transition-transform duration-300 group-hover:scale-110"
             />
           )
         }
@@ -68,7 +68,7 @@ export function StarInput({
             height={size}
             className={cn(
               i < value
-                ? 'fill-amber-400 text-amber-400 drop-shadow-[0_1px_4px_rgba(245,158,11,0.5)]'
+                ? 'fill-caramel-400 text-caramel-400 drop-shadow-[0_1px_4px_rgba(140,36,37,0.5)]'
                 : 'fill-transparent text-muted-foreground/40',
               'transition-colors',
             )}

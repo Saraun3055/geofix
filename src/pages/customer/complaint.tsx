@@ -79,7 +79,7 @@ export default function CustomerComplaint() {
 
       <div className="paper-card">
         <div className="flex items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-100 text-rose-700">
+          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-rust-100 text-rust-800">
             <ShieldAlert className="h-5 w-5" />
           </span>
           <div>

@@ -3,10 +3,15 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* ------------------------------------------------------------------ */
-/* GeoFix design tokens                                                 */
-/* Warm terracotta + amber brand. Distinct scopes per portal.          */
-/* ------------------------------------------------------------------ */
+/* ─────────────────────────────────────────────────────────────
+   GeoFix design tokens
+   Reference palette (exact):
+     #FFFFFF   Pure white            — main page background, header text
+     #FDFBF7   Warm cream            — background behind cards/sections
+     #7A1B1C   Deep maroon-brown     — headers, nav, prominent titles
+     #8C2425   Maroon accent         — hover states, active buttons
+     #2D2D2D   Dark charcoal         — body paragraphs, descriptions
+   ───────────────────────────────────────────────────────────── */
 
 @theme inline {
   --color-background: var(--background);
@@ -37,6 +42,37 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
+  /* Single maroon ramp (white → deep maroon). Every family points at the
+     same hue so the UI stays strictly white + maroon + charcoal. */
+  --color-sage-50: #fdf6f5;
+  --color-sage-100: #f9e9e7;
+  --color-sage-200: #f0cac7;
+  --color-sage-300: #e0a09b;
+  --color-sage-400: #c97772;
+  --color-sage-500: #a8504c;
+  --color-sage-600: #8c2425;
+  --color-sage-700: #7f1c1d;
+  --color-sage-800: #6a1515;
+  --color-sage-900: #4a0f10;
+  --color-caramel-50: #fdf6f5;
+  --color-caramel-100: #f9e9e7;
+  --color-caramel-200: #f0cac7;
+  --color-caramel-300: #e0a09b;
+  --color-caramel-400: #c97772;
+  --color-caramel-500: #a8504c;
+  --color-caramel-600: #8c2425;
+  --color-caramel-700: #7a1b1c;
+  --color-caramel-800: #6a1515;
+  --color-caramel-900: #4a0f10;
+  --color-rust-50: #fdf6f5;
+  --color-rust-100: #f9e9e7;
+  --color-rust-300: #e0a09b;
+  --color-rust-400: #c97772;
+  --color-rust-600: #7a1b1c;
+  --color-rust-800: #5a1011;
+  --color-umber-900: #3a0d0e;
+  --color-umber-950: #2a090a;
+
   --font-display: 'Sora Variable', ui-sans-serif, system-ui, sans-serif;
   --font-sans: 'Archivo Variable', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono Variable', ui-monospace, 'Cascadia Mono', monospace;
@@ -48,142 +84,156 @@
   --radius-2xl: calc(var(--radius) + 12px);
 }
 
-/* Default: Customer & shared surface (warm parchment) */
+/* Default: pure white page, charcoal text, deep maroon accents.
+   Used by customer, worker and admin portals. */
 :root {
   color-scheme: light;
-  --radius: 0.75rem;
-  --background: #faf6ef;
-  --foreground: #221a15;
-  --card: #fffdf8;
-  --card-foreground: #2a211b;
-  --popover: #fffdf8;
-  --popover-foreground: #2a211b;
-  --primary: #b7512e;
-  --primary-foreground: #fff7f2;
-  --secondary: #f2e9dc;
-  --secondary-foreground: #4a3a30;
-  --muted: #f1e9dd;
-  --muted-foreground: #7c6b5e;
-  --accent: #f2a23c;
-  --accent-foreground: #3a2508;
-  --destructive: #b3382c;
-  --destructive-foreground: #fff5f3;
-  --border: #e5dac8;
-  --input: #d9cbb6;
-  --ring: #b7512e;
-  --sidebar: #241b15;
-  --sidebar-foreground: #f0e7da;
-  --sidebar-primary: #d5774f;
-  --sidebar-primary-foreground: #241b15;
-  --sidebar-accent: #33271e;
-  --sidebar-accent-foreground: #f8efe2;
-  --sidebar-border: #3a2c21;
-  --sidebar-ring: #d5774f;
+  --radius: 0.9rem;
+  --background: #ffffff;
+  --foreground: #2d2d2d;
+  --card: #ffffff;
+  --card-foreground: #2d2d2d;
+  --popover: #ffffff;
+  --popover-foreground: #2d2d2d;
+  --primary: #7a1b1c;
+  --primary-foreground: #ffffff;
+  --secondary: #fdfbf7;
+  --secondary-foreground: #7a1b1c;
+  --muted: #fdfbf7;
+  --muted-foreground: color-mix(in oklab, #2d2d2d 60%, #ffffff);
+  --accent: #8c2425;
+  --accent-foreground: #ffffff;
+  --destructive: #7a1b1c;
+  --destructive-foreground: #ffffff;
+  --border: color-mix(in oklab, #7a1b1c 15%, #ffffff);
+  --input: color-mix(in oklab, #7a1b1c 32%, #ffffff);
+  --ring: #7a1b1c;
+  --sidebar: #fdfbf7;
+  --sidebar-foreground: #2d2d2d;
+  --sidebar-primary: #7a1b1c;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: color-mix(in oklab, #7a1b1c 8%, #ffffff);
+  --sidebar-accent-foreground: #7a1b1c;
+  --sidebar-border: color-mix(in oklab, #7a1b1c 14%, #ffffff);
+  --sidebar-ring: #7a1b1c;
 }
 
-/* Worker portal: amber-flavored */
+/* Worker portal: same light palette */
 .portal-worker {
-  --primary: #9a6a10;
-  --primary-foreground: #fffaf0;
-  --ring: #9a6a10;
-  --accent: #e8a33d;
-  --sidebar-primary: #e0a23c;
-  --sidebar-primary-foreground: #2b1d05;
-  --background: #f9f4e7;
+  --primary: #7a1b1c;
+  --primary-foreground: #ffffff;
+  --ring: #7a1b1c;
+  --accent: #8c2425;
+  --background: #ffffff;
+  --sidebar-primary: #7a1b1c;
+  --sidebar-primary-foreground: #ffffff;
 }
 
-/* Admin portal: neutral operations tool */
+/* Admin portal: same light palette */
 .portal-admin {
-  --background: #f2eee8;
-  --foreground: #1d1a17;
-  --card: #fbf8f3;
-  --primary: #40332b;
-  --primary-foreground: #f5efe7;
-  --ring: #40332b;
-  --accent: #b08a4b;
-  --accent-foreground: #241c0e;
-  --muted: #e9e2d8;
-  --muted-foreground: #6b6157;
-  --border: #dcd2c4;
-  --input: #cec2b2;
-  --sidebar: #191512;
-  --sidebar-foreground: #efe6da;
-  --sidebar-primary: #c9a26b;
-  --sidebar-primary-foreground: #191512;
-  --sidebar-accent: #251f1a;
-  --sidebar-accent-foreground: #f3eadc;
-  --sidebar-border: #2c251e;
-  --sidebar-ring: #c9a26b;
+  --background: #ffffff;
+  --foreground: #2d2d2d;
+  --card: #ffffff;
+  --primary: #7a1b1c;
+  --primary-foreground: #ffffff;
+  --ring: #7a1b1c;
+  --accent: #8c2425;
+  --accent-foreground: #ffffff;
+  --muted: #fdfbf7;
+  --muted-foreground: color-mix(in oklab, #2d2d2d 60%, #ffffff);
+  --border: color-mix(in oklab, #7a1b1c 15%, #ffffff);
+  --input: color-mix(in oklab, #7a1b1c 32%, #ffffff);
+  --sidebar: #fdfbf7;
+  --sidebar-foreground: #2d2d2d;
+  --sidebar-primary: #7a1b1c;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: color-mix(in oklab, #7a1b1c 8%, #ffffff);
+  --sidebar-accent-foreground: #7a1b1c;
+  --sidebar-border: color-mix(in oklab, #7a1b1c 14%, #ffffff);
+  --sidebar-ring: #7a1b1c;
 }
 
-/* ────────────────────────────────────────────────────────────── */
-/* Dark theme — opt-in via the theme toggle. Default stays light. */
-/* ────────────────────────────────────────────────────────────── */
+/* Dark theme — warm maroon-tinted charcoal that keeps the brand hue.
+   Opt-in via the theme toggle. Default stays light. */
 .dark {
   color-scheme: dark;
-  --background: #17130f;
-  --foreground: #f1e8d8;
-  --card: #211b14;
-  --card-foreground: #f5ecdd;
-  --popover: #211b14;
-  --popover-foreground: #f5ecdd;
-  --primary: #e07a4f;
-  --primary-foreground: #25110a;
-  --secondary: #2e251b;
-  --secondary-foreground: #eadbc2;
-  --muted: #241d15;
-  --muted-foreground: #a3907b;
-  --accent: #f2a33c;
-  --accent-foreground: #2a1a04;
-  --destructive: #e15a43;
-  --destructive-foreground: #fff5f2;
-  --border: #392f22;
-  --input: #4a3d2c;
-  --ring: #e07a4f;
-  --sidebar: #120d09;
-  --sidebar-foreground: #ecdfc9;
-  --sidebar-primary: #e58a5c;
-  --sidebar-primary-foreground: #1e1209;
-  --sidebar-accent: #2a2117;
-  --sidebar-accent-foreground: #f6ecda;
-  --sidebar-border: #32281b;
-  --sidebar-ring: #e58a5c;
+  --background: #1c1314;
+  --foreground: #f5ece6;
+  --card: #261a1b;
+  --card-foreground: #f5ece6;
+  --popover: #24181a;
+  --popover-foreground: #f5ece6;
+  --primary: #b0524b;
+  --primary-foreground: #ffffff;
+  --secondary: #32211f;
+  --secondary-foreground: #f5ece6;
+  --muted: #2b1d1d;
+  --muted-foreground: #cbbab1;
+  --accent: #c97772;
+  --accent-foreground: #1a0b0b;
+  --destructive: #c97772;
+  --destructive-foreground: #1a0b0b;
+  --border: color-mix(in oklab, #a8504c 38%, #24181a);
+  --input: color-mix(in oklab, #a8504c 45%, #24181a);
+  --ring: #c97772;
+  --sidebar: #201516;
+  --sidebar-foreground: #f2e8e1;
+  --sidebar-primary: #c97772;
+  --sidebar-primary-foreground: #1a0b0b;
+  --sidebar-accent: #372424;
+  --sidebar-accent-foreground: #f5ece6;
+  --sidebar-border: #45292a;
+  --sidebar-ring: #c97772;
 }
 
-/* Worker portal dark: amber-flavored */
+/* Worker portal dark: warm maroon-tinted charcoal */
 .dark .portal-worker {
-  --primary: #d9a441;
-  --primary-foreground: #261903;
-  --ring: #d9a441;
-  --accent: #e8a33d;
-  --sidebar-primary: #dfa33c;
-  --sidebar-primary-foreground: #241a05;
-  --background: #171311;
+  --background: #1c1314;
+  --foreground: #f5ece6;
+  --card: #261a1b;
+  --card-foreground: #f5ece6;
+  --primary: #b0524b;
+  --primary-foreground: #ffffff;
+  --ring: #c97772;
+  --accent: #c97772;
+  --accent-foreground: #1a0b0b;
+  --muted: #2b1d1d;
+  --muted-foreground: #cbbab1;
+  --border: color-mix(in oklab, #a8504c 38%, #24181a);
+  --input: color-mix(in oklab, #a8504c 45%, #24181a);
+  --sidebar: #201516;
+  --sidebar-foreground: #f2e8e1;
+  --sidebar-primary: #c97772;
+  --sidebar-primary-foreground: #1a0b0b;
+  --sidebar-accent: #372424;
+  --sidebar-accent-foreground: #f5ece6;
+  --sidebar-border: #45292a;
+  --sidebar-ring: #c97772;
 }
 
-/* Admin portal dark: neutral operations */
+/* Admin portal dark: warm maroon-tinted charcoal */
 .dark .portal-admin {
-  --background: #14120f;
-  --foreground: #ece4d7;
-  --card: #1d1a16;
-  --card-foreground: #f1e9db;
-  --primary: #c8b6a0;
-  --primary-foreground: #1c160e;
-  --ring: #c8b6a0;
-  --accent: #b08a4b;
-  --accent-foreground: #241c0e;
-  --muted: #251f19;
-  --muted-foreground: #9c8e7c;
-  --border: #2f2923;
-  --input: #3a332b;
-  --sidebar: #100d0b;
-  --sidebar-foreground: #ece2d2;
-  --sidebar-primary: #c9a26b;
-  --sidebar-primary-foreground: #191512;
-  --sidebar-accent: #221c15;
-  --sidebar-accent-foreground: #f3eadc;
-  --sidebar-border: #2a241c;
-  --sidebar-ring: #c9a26b;
+  --background: #1c1314;
+  --foreground: #f5ece6;
+  --card: #261a1b;
+  --card-foreground: #f5ece6;
+  --primary: #b0524b;
+  --primary-foreground: #ffffff;
+  --ring: #c97772;
+  --accent: #c97772;
+  --accent-foreground: #1a0b0b;
+  --muted: #2b1d1d;
+  --muted-foreground: #cbbab1;
+  --border: color-mix(in oklab, #a8504c 38%, #24181a);
+  --input: color-mix(in oklab, #a8504c 45%, #24181a);
+  --sidebar: #201516;
+  --sidebar-foreground: #f2e8e1;
+  --sidebar-primary: #c97772;
+  --sidebar-primary-foreground: #1a0b0b;
+  --sidebar-accent: #372424;
+  --sidebar-accent-foreground: #f5ece6;
+  --sidebar-border: #45292a;
+  --sidebar-ring: #c97772;
 }
 
 @layer base {
@@ -201,6 +251,16 @@
     font-feature-settings: 'ss01' on;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    background-image: radial-gradient(
+        58rem 42rem at 112% -8%,
+        color-mix(in oklab, var(--accent) 7%, transparent),
+        transparent 62%,
+      ),
+      radial-gradient(
+        44rem 34rem at -14% 108%,
+        color-mix(in oklab, var(--primary) 6%, transparent),
+        transparent 58%,
+      );
   }
   h1,
   h2,
@@ -212,8 +272,8 @@
   ::selection {
     background-color: color-mix(in oklab, var(--primary) 22%, transparent);
   }
-  
-  /* Warm scrollbars that respect each portal's palette */
+
+  /* Warm maroon-tinted scrollbars */
   ::-webkit-scrollbar {
     width: 10px;
     height: 10px;
@@ -229,12 +289,30 @@
   ::-webkit-scrollbar-thumb:hover {
     background: color-mix(in oklab, var(--muted-foreground) 58%, var(--border));
   }
+
+  /* Smooth default transitions for all interactive elements */
+  :where(a, button, [role='button'], input, select, textarea) {
+    transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+    transition-duration: 220ms;
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
 }
 
-/* ------------------------------------------------------------------ */
-/* Bespoke utilities / component classes                                */
-/* ------------------------------------------------------------------ */
+/* Respect users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
 
+/* ─────────────────────────────────────────────────────────────
+   Bespoke utilities / component classes
+   ───────────────────────────────────────────────────────────── */
 @layer components {
   /* Monospace stat figures used across admin + worker dashboards */
   .stat-number {
@@ -243,7 +321,7 @@
     letter-spacing: -0.03em;
   }
 
-  /* Landing hero background: faint topographic / contour feel */
+  /* Landing hero background: faint contour grid */
   .geo-grid {
     background-image:
       linear-gradient(to right, color-mix(in oklab, var(--foreground) 6%, transparent) 1px, transparent 1px),
@@ -255,28 +333,51 @@
     background-size: 18px 18px;
   }
 
-  /* Warm paper card used on portal pages */
+  /* Soft white paper card used on portal pages */
   .paper-card {
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
     box-shadow:
       0 1px 0 0 color-mix(in oklab, white 70%, transparent) inset,
-      0 10px 24px -18px rgb(40 25 12 / 0.35);
+      0 10px 24px -18px rgb(122 27 28 / 0.14);
   }
 
   .paper-card-hover {
+    position: relative;
+    backface-visibility: hidden;
+    will-change: transform;
     transition:
-      transform 250ms cubic-bezier(0.22, 1, 0.36, 1),
-      box-shadow 250ms cubic-bezier(0.22, 1, 0.36, 1),
-      border-color 250ms ease;
+      transform 340ms cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 340ms cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 260ms ease;
+  }
+  .paper-card-hover::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 14%;
+    right: 14%;
+    height: 3px;
+    border-radius: 9999px;
+    background: linear-gradient(90deg, transparent, var(--primary), var(--accent), transparent);
+    opacity: 0;
+    transform: scaleX(0.35);
+    transition:
+      opacity 260ms ease,
+      transform 520ms cubic-bezier(0.22, 1, 0.36, 1);
+    pointer-events: none;
+  }
+  .paper-card-hover:hover::before {
+    opacity: 1;
+    transform: scaleX(1);
   }
   .paper-card-hover:hover {
-    transform: translateY(-4px) scale(1.01);
-    border-color: color-mix(in oklab, var(--primary) 45%, var(--border));
+    transform: translateY(-5px) scale(1.012);
+    border-color: color-mix(in oklab, var(--primary) 52%, var(--border));
     box-shadow:
-      0 1px 0 0 color-mix(in oklab, white 70%, transparent) inset,
-      0 14px 30px -10px color-mix(in oklab, var(--primary) 22%, transparent);
+      0 1px 0 0 color-mix(in oklab, white 75%, transparent) inset,
+      0 20px 44px -18px color-mix(in oklab, var(--primary) 36%, transparent);
   }
 
   /* Translucent frosted card for floating chips / overlays */
@@ -288,30 +389,44 @@
     border-radius: var(--radius-xl);
     box-shadow:
       0 1px 0 0 color-mix(in oklab, white 60%, transparent) inset,
-      0 16px 32px -20px rgb(40 25 12 / 0.45);
+      0 16px 32px -20px rgb(122 27 28 / 0.18);
+    transition:
+      border-color 260ms ease,
+      box-shadow 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .paper-card-glass:hover {
+    border-color: color-mix(in oklab, var(--primary) 48%, transparent);
+    box-shadow:
+      0 1px 0 0 color-mix(in oklab, white 60%, transparent) inset,
+      0 22px 44px -22px rgb(122 27 28 / 0.28);
   }
 
-  /* Soft colored halos — primary terracotta vs amber gold */
+  /* Soft maroon halos */
   .glow-primary {
     box-shadow:
       0 0 0 1px color-mix(in oklab, var(--primary) 25%, transparent),
       0 12px 32px -14px color-mix(in oklab, var(--primary) 42%, transparent);
   }
-  .glow-amber {
+  .glow-caramel {
     box-shadow:
-      0 0 0 1px color-mix(in oklab, var(--accent) 32%, transparent),
-      0 12px 32px -14px color-mix(in oklab, var(--accent) 48%, transparent);
+      0 0 0 1px color-mix(in oklab, var(--accent) 30%, transparent),
+      0 12px 32px -16px color-mix(in oklab, var(--accent) 52%, transparent);
+  }
+  .glow-sage {
+    box-shadow:
+      0 0 0 1px color-mix(in oklab, var(--color-sage-500) 35%, transparent),
+      0 10px 30px -14px color-mix(in oklab, var(--color-sage-500) 55%, transparent);
   }
 
-  /* Gold gradient text for "top rated" emphasis */
+  /* Maroon gradient for "crowned" ratings */
   .text-gradient-gold {
-    background-image: linear-gradient(115deg, #e0a33d 0%, #f5c34a 45%, #b86f0e 100%);
+    background-image: linear-gradient(115deg, #c97772 0%, #8c2425 45%, #7a1b1c 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
   }
 
-  /* Animated conic ring highlight for standout cards / CTAs */
+  /* Animated ring highlight for standout cards / CTAs */
   .gradient-ring {
     position: relative;
   }
@@ -396,54 +511,86 @@
   .animate-in {
     animation: geofix-in 320ms cubic-bezier(0.21, 1.02, 0.73, 1) both;
   }
+  .animate-fade-in {
+    animation: geofix-fade-in 280ms ease-out both;
+  }
   .animate-list-in {
     animation: geofix-in 380ms cubic-bezier(0.21, 1.02, 0.73, 1) both;
   }
-
-  /* Fade + rise — hero and section entrances */
   .animate-fade-in-up {
     animation: geofix-fade-in-up 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
   }
-
-  /* Soft breathing pulse — live badges, presence dots, handoff chips */
   .animate-pulse-soft {
     animation: geofix-pulse-soft 2.6s ease-in-out infinite;
   }
-
-  /* Scale + fade — card reveals with stagger */
   .animate-scale-in {
     animation: geofix-scale-in 440ms cubic-bezier(0.22, 1, 0.36, 1) both;
   }
-
-  /* Interactive hover lift for clickable cards/rows */
   .hover-lift {
-    transition: transform 180ms ease, box-shadow 180ms ease;
+    backface-visibility: hidden;
+    will-change: transform;
+    transition:
+      transform 280ms cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 280ms cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 260ms ease;
   }
   .hover-lift:hover {
-    transform: translateY(-2px) scale(1.02);
+    transform: translateY(-3px) scale(1.02);
+    border-color: color-mix(in oklab, var(--primary) 42%, var(--border));
+    box-shadow: 0 12px 30px -16px color-mix(in oklab, var(--primary) 32%, transparent);
   }
-
-  /* Gentle ambient float — decorative chips, hero badges */
   .animate-float {
     animation: geofix-float 6s ease-in-out infinite;
   }
   .animate-float-slow {
     animation: geofix-float 9s ease-in-out infinite;
   }
-
-  /* Breathing radial glow — live status avatars, location markers */
   .animate-pulse-glow {
     animation: geofix-pulse-glow 2.2s ease-in-out infinite;
   }
-
-  /* Cascading entrance — worker cards, feeds, stat tiles */
   .animate-stagger-in {
     animation: geofix-fade-in-up 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
   }
-
-  /* Playful attention bounce — badges, verified ticks */
   .animate-badge-bounce {
     animation: geofix-badge-bounce 2.4s ease-in-out infinite;
+  }
+
+  /* Maroon presence aura — duty orbs, online dots */
+  .aura-sage {
+    box-shadow:
+      0 0 0 6px color-mix(in oklab, var(--color-sage-500) 18%, transparent),
+      0 0 0 12px color-mix(in oklab, var(--color-sage-500) 10%, transparent),
+      0 8px 22px -10px color-mix(in oklab, var(--color-sage-500) 60%, transparent);
+  }
+  .aura-sage-pulse {
+    animation: geofix-aura-sage 2.4s ease-in-out infinite;
+  }
+  .aura-caramel {
+    box-shadow:
+      0 0 0 6px color-mix(in oklab, var(--accent) 16%, transparent),
+      0 0 0 12px color-mix(in oklab, var(--accent) 8%, transparent),
+      0 8px 22px -10px color-mix(in oklab, var(--accent) 55%, transparent);
+  }
+  .aura-caramel-pulse {
+    animation: geofix-aura-caramel 2.6s ease-in-out infinite;
+  }
+
+  /* Expanding radar ripple — maroon rings radiate out */
+  .radar-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 9999px;
+    border: 2px solid color-mix(in oklab, var(--accent) 55%, transparent);
+    animation: geofix-radar-ring 2.4s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  }
+  .radar-ring-delay {
+    animation-delay: 1.2s;
+  }
+  .radar-ring-sage {
+    border-color: color-mix(in oklab, var(--color-sage-500) 55%, transparent);
+  }
+  .radar-ring-sage-delay {
+    animation-delay: 1.2s;
   }
 }
 
@@ -455,6 +602,15 @@
   to {
     opacity: 1;
     transform: none;
+  }
+}
+
+@keyframes geofix-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
 
@@ -543,5 +699,52 @@
   }
   100% {
     background-position: 200% 50%;
+  }
+}
+
+@keyframes geofix-aura-sage {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 6px color-mix(in oklab, var(--color-sage-500) 18%, transparent),
+      0 0 0 12px color-mix(in oklab, var(--color-sage-500) 10%, transparent),
+      0 8px 22px -10px color-mix(in oklab, var(--color-sage-500) 60%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 0 10px color-mix(in oklab, var(--color-sage-500) 10%, transparent),
+      0 0 0 20px color-mix(in oklab, var(--color-sage-500) 0%, transparent),
+      0 12px 30px -10px color-mix(in oklab, var(--color-sage-500) 70%, transparent);
+  }
+}
+
+@keyframes geofix-aura-caramel {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 6px color-mix(in oklab, var(--accent) 16%, transparent),
+      0 0 0 12px color-mix(in oklab, var(--accent) 8%, transparent),
+      0 8px 22px -10px color-mix(in oklab, var(--accent) 55%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 0 10px color-mix(in oklab, var(--accent) 9%, transparent),
+      0 0 0 20px color-mix(in oklab, var(--accent) 0%, transparent),
+      0 12px 30px -10px color-mix(in oklab, var(--accent) 65%, transparent);
+  }
+}
+
+@keyframes geofix-radar-ring {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.85;
+  }
+  70% {
+    transform: scale(2);
+    opacity: 0.15;
+  }
+  100% {
+    transform: scale(2.1);
+    opacity: 0;
   }
 }

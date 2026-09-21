@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -197,8 +197,8 @@ export default function CustomerLiveStatus() {
         <div className="mb-4 flex items-center justify-between">
           <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
             <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-sage-400 opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-sage-500" />
             </span>
             Live status
           </p>
@@ -275,8 +275,8 @@ export default function CustomerLiveStatus() {
 {/* Pending / Waiting */}
       {status === 'searching' && (!request.rejectedBy || request.rejectedBy.length === 0) && (
         <div className="flex flex-col items-center gap-4 rounded-xl border border-border bg-card px-6 py-10 text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-amber-100">
-            <Loader2 className="h-7 w-7 animate-spin text-amber-700" />
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-caramel-100">
+            <Loader2 className="h-7 w-7 animate-spin text-caramel-700" />
           </div>
           <p className="font-display text-lg font-semibold">We're searching for your worker</p>
           <p className="max-w-sm text-sm text-muted-foreground">
@@ -295,8 +295,8 @@ export default function CustomerLiveStatus() {
 
       {status === 'pending_worker_response' && (
         <div className="flex flex-col items-center gap-4 rounded-xl border border-border bg-card px-6 py-10 text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-blue-100">
-            <PhoneCall className="h-7 w-7 animate-pulse text-blue-700" />
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-stone-100">
+            <PhoneCall className="h-7 w-7 animate-pulse text-stone-500" />
           </div>
           <p className="font-display text-lg font-semibold">{request.workerName ?? 'The worker'} has been notified</p>
           <p className="max-w-sm text-sm text-muted-foreground">
@@ -311,22 +311,22 @@ export default function CustomerLiveStatus() {
       {/* Active job — live progress + WhatsApp handoff + update log */}
       {ACTIVE_STATUSES.includes(status!) && request.workerId && (
         <div className="space-y-5 animate-in">
-          <div
-            className={cn(
-              'rounded-xl border px-6 py-5 text-center shadow-[0_16px_40px_-24px_rgba(0,0,0,0.35)]',
-              status === 'accepted' && 'border-emerald-200 bg-emerald-50 shadow-emerald-500/20',
-              status === 'on_the_way' && 'border-sky-200 bg-sky-50 shadow-sky-500/20',
-              status === 'arrived' && 'border-indigo-200 bg-indigo-50 shadow-indigo-500/20',
-              status === 'in_progress' && 'border-amber-200 bg-amber-50 shadow-amber-500/25',
-            )}
-          >
+<div
+              className={cn(
+                'rounded-xl border px-6 py-5 text-center shadow-[0_16px_40px_-24px_rgba(0,0,0,0.35)]',
+                status === 'accepted' && 'border-sage-200 bg-sage-50 shadow-sage-500/20',
+                status === 'on_the_way' && 'border-caramel-200 bg-caramel-50 shadow-caramel-500/20',
+                status === 'arrived' && 'border-caramel-200 bg-caramel-50 shadow-caramel-500/20',
+                status === 'in_progress' && 'border-caramel-200 bg-caramel-50 shadow-caramel-500/25',
+              )}
+            >
             <div
               className={cn(
                 'mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full animate-pulse-glow',
-                status === 'accepted' && 'bg-emerald-200 text-emerald-800',
-                status === 'on_the_way' && 'bg-sky-200 text-sky-800',
-                status === 'arrived' && 'bg-indigo-200 text-indigo-800',
-                status === 'in_progress' && 'bg-amber-200 text-amber-800',
+                status === 'accepted' && 'bg-sage-200 text-sage-800',
+                status === 'on_the_way' && 'bg-caramel-200 text-caramel-900',
+                status === 'arrived' && 'bg-caramel-200 text-caramel-900',
+                status === 'in_progress' && 'bg-caramel-200 text-caramel-900',
               )}
             >
               {status === 'accepted' && <Check className="h-6 w-6" />}
@@ -457,7 +457,7 @@ export default function CustomerLiveStatus() {
 
       {status === 'completed' && request.bill && request.paymentStatus === 'paid' && (
         <div className="flex flex-col items-center gap-4 rounded-xl border border-border bg-card px-6 py-10 text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-100 text-green-700">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-sage-100 text-sage-700">
             <Check className="h-7 w-7" />
           </div>
           <p className="font-display text-lg font-semibold">Job marked complete</p>
@@ -476,7 +476,7 @@ export default function CustomerLiveStatus() {
 
       {status === 'completed' && !request.bill && (
         <div className="flex flex-col items-center gap-4 rounded-xl border border-border bg-card px-6 py-10 text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-100 text-green-700">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-sage-100 text-sage-700">
             <Check className="h-7 w-7" />
           </div>
           <p className="font-display text-lg font-semibold">Job marked complete</p>

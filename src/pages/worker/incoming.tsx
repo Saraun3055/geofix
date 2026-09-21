@@ -204,7 +204,7 @@ export default function WorkerIncoming() {
                   </span>
                 )}
                 {samePincode && (
-                  <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700">
+                  <span className="rounded bg-sage-50 px-1.5 py-0.5 text-[10px] font-medium text-sage-700">
                     same pincode as you
                   </span>
                 )}

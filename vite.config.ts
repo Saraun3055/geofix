@@ -23,8 +23,8 @@ export default defineConfig(({ mode }) => ({
               short_name: 'GeoFix',
               description:
                 'Top-rated local plumbers, electricians & technicians — instant WhatsApp connect with Madurai\u2019s best repair experts.',
-              theme_color: '#b7512e',
-              background_color: '#faf6ef',
+              theme_color: '#7a1b1c',
+              background_color: '#fdfbf7',
               display: 'standalone',
               start_url: '/',
               scope: '/',

@@ -253,14 +253,14 @@ export const STATUS_LABEL: Record<RequestStatus, string> = {
 }
 
 export const STATUS_COLOR: Record<RequestStatus, string> = {
-  searching: 'bg-amber-100 text-amber-800',
-  pending_worker_response: 'bg-blue-100 text-blue-800',
-  accepted: 'bg-emerald-100 text-emerald-800',
-  on_the_way: 'bg-sky-100 text-sky-800',
-  arrived: 'bg-indigo-100 text-indigo-800',
-  in_progress: 'bg-violet-100 text-violet-800',
-  rejected: 'bg-rose-100 text-rose-800',
-  completed: 'bg-green-100 text-green-800',
+  searching: 'bg-stone-100 text-stone-600',
+  pending_worker_response: 'bg-amber-100 text-amber-800',
+  accepted: 'bg-sage-100 text-sage-700',
+  on_the_way: 'bg-caramel-100 text-caramel-800',
+  arrived: 'bg-amber-200/70 text-amber-900',
+  in_progress: 'bg-stone-200 text-stone-700',
+  rejected: 'bg-rust-100 text-rust-800',
+  completed: 'bg-sage-100 text-sage-700',
   cancelled: 'bg-stone-200 text-stone-600',
 }
 

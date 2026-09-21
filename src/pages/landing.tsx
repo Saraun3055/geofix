@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+﻿import { Link } from 'react-router-dom'
 import {
   Wrench,
   MapPin,
@@ -111,9 +111,9 @@ function Hero() {
           <div className="paper-card relative z-10 rotate-1 overflow-hidden p-0 shadow-xl">
             <div className="flex items-center justify-between border-b border-border bg-muted/50 px-4 py-3">
               <div className="flex gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-full bg-rose-400/70" />
-                <span className="h-2.5 w-2.5 rounded-full bg-amber-400/70" />
-                <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/70" />
+                <span className="h-2.5 w-2.5 rounded-full bg-rust-400/70" />
+                <span className="h-2.5 w-2.5 rounded-full bg-caramel-400/70" />
+                <span className="h-2.5 w-2.5 rounded-full bg-sage-400/70" />
               </div>
               <span className="font-mono text-[11px] text-muted-foreground">geofix.app/customer</span>
             </div>
@@ -166,7 +166,7 @@ function Hero() {
           </div>
 <div className="paper-card absolute -bottom-6 -left-6 z-0 -rotate-3 p-3 opacity-90">
             <div className="flex items-center gap-3">
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-600 text-white">
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-sage-600 text-white">
                 <MessageCircle className="h-4 w-4" />
               </span>
               <div>
@@ -177,8 +177,8 @@ function Hero() {
           </div>
 
           <div className="paper-card-glass absolute -right-5 top-6 z-20 flex items-center gap-2.5 px-3 py-2.5 animate-float">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-yellow-500 text-amber-950 shadow-md">
-              <Star className="h-4 w-4 fill-amber-950" />
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-caramel-500 to-caramel-700 text-caramel-50 shadow-[0_2px_10px_-2px_rgba(185,101,29,0.6)]">
+              <Star className="h-4 w-4 fill-caramel-50" />
             </span>
             <div>
               <p className="text-xs font-bold leading-tight text-foreground">4.9 · Top Rated</p>
@@ -188,8 +188,8 @@ function Hero() {
 
           <div className="paper-card-glass absolute -left-16 top-1/3 z-20 hidden items-center gap-2 px-3 py-2 animate-float-slow sm:flex">
             <span className="relative flex h-2.5 w-2.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-sage-400 opacity-75" />
+              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-sage-500" />
             </span>
 <p className="font-mono text-[10px] font-semibold uppercase tracking-wide text-foreground/80">
               6 pros live near you

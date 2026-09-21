@@ -47,9 +47,9 @@ export default function ForgotPasswordPage() {
 
       {sent ? (
         <div className="mt-6 space-y-4">
-          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4">
+          <div className="rounded-xl border border-sage-500/30 bg-sage-500/10 p-4">
             <div className="flex items-start gap-3">
-              <MailCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
+              <MailCheck className="mt-0.5 h-5 w-5 shrink-0 text-sage-600" />
               <div>
                 <p className="text-sm font-semibold">Reset code on its way</p>
                 <p className="mt-1 text-xs text-muted-foreground">{sent.message}</p>

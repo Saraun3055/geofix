@@ -129,7 +129,7 @@ export default function CustomerRate() {
                 <span className="w-10 shrink-0 font-mono">{d.stars} ★</span>
                 <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
                   <div
-                    className="h-full rounded-full bg-amber-400"
+                    className="h-full rounded-full bg-caramel-400"
                     style={{ width: `${d.count > 0 ? (d.count / Math.max(1, (dist ?? []).reduce((a, b) => a + b.count, 0))) * 100 : 0}%` }}
                   />
                 </div>

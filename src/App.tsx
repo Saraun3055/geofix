@@ -1,5 +1,5 @@
-import { lazy, Suspense } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { lazy, Suspense, useEffect } from 'react'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ErrorBoundary } from 'react-error-boundary'
 import { Toaster } from '@/components/toaster'
@@ -7,6 +7,7 @@ import { useAuthInit } from '@/hooks/use-auth'
 import { ProtectedRoute, RoleRoute, AdminRoute, RoleRedirect } from '@/components/guards'
 import { ErrorFallback } from '@/components/error-fallback'
 import { LoadingSpinner } from '@/components/loading-spinner'
+import { prefetchRoute } from '@/lib/prefetch'
 
 const Landing = lazy(() => import('@/pages/landing'))
 const LoginPage = lazy(() => import('@/pages/auth/login'))
@@ -42,7 +43,7 @@ const AdminProfile = lazy(() => import('@/pages/admin/profile'))
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 10_000,
+      staleTime: 20_000,
       retry: 1,
       refetchOnWindowFocus: false,
     },
@@ -50,8 +51,10 @@ const queryClient = new QueryClient({
 })
 
 function AppRoutes() {
+  const location = useLocation()
   return (
-    <Routes>
+    <div key={location.pathname} className="animate-fade-in">
+      <Routes location={location}>
       <Route path="/" element={<Landing />} />
 
       {/* Auth */}
@@ -104,12 +107,22 @@ function AppRoutes() {
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+      </Routes>
+    </div>
   )
 }
 
 export default function App() {
   useAuthInit()
+
+  useEffect(() => {
+    const t = window.setTimeout(() => {
+      prefetchRoute('login')
+      prefetchRoute('signup')
+    }, 800)
+    return () => window.clearTimeout(t)
+  }, [])
+
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>

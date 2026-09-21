@@ -35,7 +35,7 @@ function DisputeRow({ d, onResolve }: { d: DisputeDoc; onResolve: (d: DisputeDoc
       </div>
       <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{d.description}</p>
       {d.status === 'resolved' && d.resolutionNote && (
-        <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+        <div className="mt-3 rounded-lg border border-sage-200 bg-sage-50 px-3 py-2 text-sm text-sage-800">
           <span className="font-semibold">Resolution: </span>
           {d.resolutionNote}
         </div>

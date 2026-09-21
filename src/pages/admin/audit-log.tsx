@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+﻿import { useMemo, useState } from 'react'
 import { ScrollText, Search } from 'lucide-react'
 import { useAuditLog } from '@/hooks/use-admin'
 import { Input } from '@/components/ui/input'
@@ -10,11 +10,11 @@ import { cn } from '@/lib/utils'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
 
 const ACTION_TONE: Record<string, string> = {
-  approved_worker: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-  rejected_verification: 'border-rose-200 bg-rose-50 text-rose-700',
-  resolved_dispute: 'border-blue-200 bg-blue-50 text-blue-700',
-  suspended_user: 'border-amber-200 bg-amber-50 text-amber-800',
-  unsuspend_user: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+  approved_worker: 'border-sage-200 bg-sage-50 text-sage-700',
+  rejected_verification: 'border-rust-300 bg-rust-50 text-rust-800',
+  resolved_dispute: 'border-stone-200 bg-stone-100 text-stone-700',
+  suspended_user: 'border-caramel-200 bg-caramel-50 text-caramel-800',
+  unsuspend_user: 'border-sage-200 bg-sage-50 text-sage-700',
 }
 
 type ActionGroup = 'all' | 'verification' | 'disputes' | 'users' | 'requests' | 'auth'

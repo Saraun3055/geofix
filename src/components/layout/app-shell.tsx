@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { Menu, X, LogOut, ChevronRight } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { LogoFull, Logo } from '@/components/logo'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { ThemeToggle } from '@/components/theme-toggle'
+import { prefetchByPath, prefetchPortal } from '@/lib/prefetch'
 import { cn } from '@/lib/utils'
 
 export interface NavItem {
@@ -40,6 +41,10 @@ export function AppShell({
   const portalScope =
     portal === 'worker' ? 'portal-worker' : portal === 'admin' ? 'portal-admin' : 'portal-customer'
 
+  useEffect(() => {
+    prefetchPortal(portal, 1600)
+  }, [portal])
+
   const initials = userName
     .split(' ')
     .map((p) => p[0])
@@ -72,16 +77,17 @@ export function AppShell({
             to={item.to}
             end={item.end}
             onClick={() => setMobileOpen(false)}
+            onMouseEnter={() => prefetchByPath(item.to)}
             className={({ isActive }) =>
               cn(
-                'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 hover:translate-x-0.5',
                 isActive
                   ? 'bg-sidebar-accent text-sidebar-accent-foreground'
                   : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground',
               )
             }
           >
-            <item.icon className="h-[18px] w-[18px] stroke-[1.7] transition-transform duration-200 group-hover:scale-110" />
+            <item.icon className="h-[18px] w-[18px] stroke-[1.7] transition-all duration-300 group-hover:scale-110 group-hover:text-sidebar-primary" />
             <span className="flex-1">{item.label}</span>
             {item.badge ? (
               <span
@@ -106,16 +112,17 @@ export function AppShell({
                 key={item.to}
                 to={item.to}
                 onClick={() => setMobileOpen(false)}
+                onMouseEnter={() => prefetchByPath(item.to)}
                 className={({ isActive }) =>
                   cn(
-                    'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                    'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 hover:translate-x-0.5',
                     isActive
                       ? 'bg-sidebar-accent text-sidebar-accent-foreground'
                       : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground',
                   )
                 }
               >
-                <item.icon className="h-[18px] w-[18px] stroke-[1.7] transition-transform duration-200 group-hover:scale-110" />
+<item.icon className="h-[18px] w-[18px] stroke-[1.7] transition-all duration-300 group-hover:scale-110 group-hover:text-sidebar-primary" />
                 <span className="flex-1">{item.label}</span>
               </NavLink>
             ))}

@@ -73,7 +73,7 @@ export function MapView({
               zIndex={isActive ? 10 : 1}
               icon={{
                 path: typeof window !== 'undefined' && (window as any).google?.maps?.SymbolPath?.CIRCLE,
-                fillColor: m.color ?? '#b7512e',
+                fillColor: m.color ?? '#7a1b1c',
                 fillOpacity: 1,
                 strokeColor: isActive ? '#fff' : '#fff',
                 strokeWeight: isActive ? 4 : 2,
@@ -119,10 +119,10 @@ function MockMap({
 
   return (
     <div
-      className={cn('geo-dots relative overflow-hidden rounded-xl border border-border bg-[#efe9dd]', className)}
+      className={cn('geo-dots relative overflow-hidden rounded-xl border border-border bg-background', className)}
       style={{ height: height ?? 320 }}
     >
-      <div className="absolute inset-0 opacity-60" style={{ background: 'linear-gradient(135deg,#ece5d6 0%,#f6f1e7 100%)' }} />
+      <div className="absolute inset-0 opacity-60" style={{ background: 'linear-gradient(135deg,#fdf6f5 0%,#ffffff 100%)' }} />
       {markers.map((m) => {
         const x = ((m.lng - bounds.minLng) / (bounds.maxLng - bounds.minLng)) * 100
         const y = 100 - ((m.lat - bounds.minLat) / (bounds.maxLat - bounds.minLat)) * 100
@@ -142,9 +142,9 @@ function MockMap({
             <div
               className={cn(
                 'flex h-7 w-7 items-center justify-center rounded-full text-white shadow-lg ring-4 transition-all duration-200',
-                isActive ? 'ring-amber-300/90' : 'ring-white/70',
+                isActive ? 'ring-caramel-300/90' : 'ring-white/70',
               )}
-              style={{ backgroundColor: m.color ?? (isWorker ? '#2f6f4f' : '#b7512e') }}
+              style={{ backgroundColor: m.color ?? (isWorker ? '#8c2425' : '#7a1b1c') }}
             >
               {isWorker ? <CategoryIcon category={m.category ?? ''} className="h-3.5 w-3.5" /> : <MapPin className="h-4 w-4" />}
             </div>

@@ -1,4 +1,4 @@
-import { CheckCircle2, Info, AlertTriangle, XCircle, X } from 'lucide-react'
+﻿import { CheckCircle2, Info, AlertTriangle, XCircle, X } from 'lucide-react'
 import { useToastStore } from '@/hooks/use-toast'
 import { cn } from '@/lib/utils'
 
@@ -10,10 +10,10 @@ const ICONS = {
 }
 
 const STYLES = {
-  info: 'border-blue-200 text-blue-700',
-  success: 'border-emerald-200 text-emerald-700',
-  error: 'border-rose-200 text-rose-700',
-  warning: 'border-amber-200 text-amber-700',
+  info: 'border-stone-200 text-stone-600',
+  success: 'border-sage-200 text-sage-700',
+  error: 'border-rust-300 text-rust-800',
+  warning: 'border-caramel-200 text-caramel-700',
 }
 
 export function Toaster() {

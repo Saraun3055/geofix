@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+﻿import { useMemo, useState } from 'react'
 import { Users, Search, UserX, RotateCcw, ShieldCheck } from 'lucide-react'
 import { useAllUsers } from '@/hooks/use-admin'
 import { suspendUser, unsuspendUser } from '@/services/admin.service'
@@ -110,14 +110,14 @@ function UserRow({ user, admin }: { user: UserDoc; admin: string }) {
     <div className="paper-card paper-card-hover flex items-center justify-between gap-3 p-4">
       <div className="flex min-w-0 items-center gap-3">
         <Avatar>
-          <AvatarFallback className={cn(user.role === 'worker' && 'bg-amber-100 text-amber-800')}>
+          <AvatarFallback className={cn(user.role === 'worker' && 'bg-caramel-100 text-caramel-800')}>
             {user.name.split(' ').map((p) => p[0]).join('').slice(0, 2).toUpperCase()}
           </AvatarFallback>
         </Avatar>
         <div className="min-w-0">
           <p className="flex items-center gap-1.5 truncate text-sm font-semibold">
             {user.name}
-            {user.role === 'worker' && <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />}
+            {user.role === 'worker' && <ShieldCheck className="h-3.5 w-3.5 text-sage-600" />}
             {user.suspended && <UserX className="h-3.5 w-3.5 text-destructive" />}
           </p>
           <p className="truncate text-xs text-muted-foreground">{user.email ?? user.phone ?? user.uid}</p>

@@ -174,7 +174,7 @@ export default function WorkerDashboard() {
             {completedJobs.slice(0, 4).map((r) => (
               <div key={r.id} className="paper-card flex items-center justify-between gap-3 p-4">
                 <div className="flex items-center gap-3">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-sage-100 text-sage-700">
                     <Star className="h-4 w-4" />
                   </span>
                   <div>
@@ -230,15 +230,15 @@ function VerificationAlert({
   return (
     <div
       className={cn(
-        'flex flex-col gap-3 rounded-xl border px-5 py-4 sm:flex-row sm:items-center sm:justify-between',
-        isRejected ? 'border-rose-200 bg-rose-50' : 'border-amber-200 bg-amber-50',
+        'flex flex-col gap-3 rounded-xl border bg-gradient-to-r p-5 sm:flex-row sm:items-center sm:justify-between shadow-[0_10px_30px_-18px_rgb(44_30_16/0.45)]',
+        isRejected ? 'border-rust-300 bg-rust-50' : 'border-caramel-200 bg-caramel-50',
       )}
     >
       <div className="flex items-start gap-3">
         <span
           className={cn(
             'flex h-9 w-9 shrink-0 items-center justify-center rounded-full',
-            isRejected ? 'bg-rose-100 text-rose-600' : 'bg-amber-100 text-amber-600',
+            isRejected ? 'bg-rust-100 text-rust-800' : 'bg-caramel-100 text-caramel-800',
           )}
         >
           {isRejected ? <ShieldAlert className="h-5 w-5" /> : <ShieldCheck className="h-5 w-5" />}
@@ -258,18 +258,28 @@ function VerificationAlert({
 
 function AvailabilityToggle({ online, onToggle }: { online: boolean; onToggle: () => void }) {
   return (
-    <div className="flex flex-col items-end gap-1">
-      <div className="relative flex items-center rounded-full border border-border bg-muted/60 p-0.5">
+    <div className="flex flex-col items-end gap-1.5">
+      <div
+        className={cn(
+          'relative flex items-center rounded-full border p-1 backdrop-blur transition-colors duration-300',
+          online ? 'border-sage-200 bg-sage-50/60' : 'border-border bg-muted/50',
+        )}
+      >
         <span
           aria-hidden
-          className="absolute bottom-0.5 left-0.5 top-0.5 w-[calc(50%-2px)] rounded-full bg-background shadow-sm transition-all duration-300 ease-out"
+          className={cn(
+            'absolute bottom-1 left-1 top-1 w-[calc(50%-4px)] rounded-full shadow-sm transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]',
+            online
+              ? 'translate-x-full bg-gradient-to-br from-sage-500 to-sage-700 glow-sage'
+              : 'bg-white',
+          )}
           style={{ transform: online ? 'translateX(100%)' : 'translateX(0)' }}
         />
         <button
           type="button"
           onClick={() => !online && onToggle()}
           className={cn(
-            'relative z-10 inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition-colors cursor-pointer',
+            'relative z-10 inline-flex items-center justify-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition-colors cursor-pointer',
             online ? 'text-muted-foreground' : 'text-foreground',
           )}
           aria-pressed={!online}
@@ -281,17 +291,22 @@ function AvailabilityToggle({ online, onToggle }: { online: boolean; onToggle: (
           type="button"
           onClick={() => !online && onToggle()}
           className={cn(
-            'relative z-10 inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition-colors cursor-pointer',
-            online ? 'text-emerald-700' : 'text-muted-foreground',
+            'relative z-10 inline-flex items-center justify-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold transition-colors cursor-pointer',
+            online ? 'text-sage-700' : 'text-muted-foreground',
           )}
           aria-pressed={online}
         >
           <Wifi className="h-4 w-4" />
           Online
-          {online && <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />}
+          {online && (
+            <span className="relative flex h-2 w-2">
+              <span className="radar-ring radar-ring-sage" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-sage-500" />
+            </span>
+          )}
         </button>
       </div>
-      <span className={cn('pr-1 text-[11px] font-medium', online ? 'text-emerald-600' : 'text-muted-foreground')}>
+      <span className={cn('pr-1 text-[11px] font-medium', online ? 'text-sage-600' : 'text-muted-foreground')}>
         {online ? 'Now showing up in searches' : 'Hidden from new searches'}
       </span>
     </div>

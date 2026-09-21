@@ -52,11 +52,14 @@ export default function CustomerDashboard() {
       {active && (
         <Link
           to={`/customer/requests/${active.id}`}
-          className="paper-card paper-card-hover flex items-center justify-between gap-4 border-l-4 border-l-primary p-5"
+          className="paper-card paper-card-hover relative flex items-center justify-between gap-4 overflow-hidden border-l-4 border-l-primary p-5"
         >
+          <div className="pointer-events-none absolute -right-8 -top-10 h-32 w-32 rounded-full bg-accent/15 blur-2xl" />
           <div className="flex items-center gap-4">
-            <span className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-secondary text-primary">
+            <span className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-caramel-100 text-primary">
               <Activity className="h-5 w-5 animate-pulse" />
+              <span className="radar-ring" />
+              <span className="radar-ring radar-ring-delay" />
               <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-primary" />
             </span>
             <div>
@@ -71,8 +74,8 @@ export default function CustomerDashboard() {
               <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
                 <div
                   className={cn(
-                    'h-full rounded-full bg-primary transition-all duration-700',
-                    active.status === 'completed' && 'bg-emerald-500',
+                    'h-full rounded-full bg-gradient-to-r from-caramel-600 to-caramel-400 transition-all duration-700',
+                    active.status === 'completed' && 'from-sage-600 to-sage-400',
                   )}
                   style={{ width: `${progressPercent(active.status)}%` }}
                 />
@@ -88,14 +91,19 @@ export default function CustomerDashboard() {
       <section>
         <h2 className="font-display text-lg font-semibold">Start a new request</h2>
         <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {CATEGORY_LIST.map((cat) => {
+          {CATEGORY_LIST.map((cat, i) => {
             return (
               <button
                 key={cat}
                 onClick={() => navigate(`/customer/new?category=${encodeURIComponent(cat)}`)}
-                className="paper-card paper-card-hover group flex flex-col items-start gap-3 p-4 text-left cursor-pointer"
+                className="paper-card paper-card-hover group relative flex flex-col items-start gap-3 overflow-hidden p-4 text-left cursor-pointer bg-gradient-to-b from-card to-stone-50/70"
               >
-                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary text-primary transition-transform group-hover:scale-105">
+                <span className="pointer-events-none absolute -right-6 -top-6 h-16 w-16 rounded-full bg-accent/10 blur-xl transition-transform duration-500 group-hover:scale-150" />
+                <span className="pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-caramel-300 via-primary to-caramel-500 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                <span className={cn(
+                  'flex h-9 w-9 items-center justify-center rounded-lg transition-transform duration-300 group-hover:scale-105',
+                  i % 3 === 0 ? 'bg-sage-100 text-sage-700' : 'bg-caramel-100 text-primary',
+                )}>
                   <CategoryIcon category={cat} className="h-4 w-4" />
                 </span>
                 <span className="text-sm font-semibold leading-tight">{cat}</span>
@@ -104,10 +112,10 @@ export default function CustomerDashboard() {
           })}
           <button
             onClick={() => navigate('/customer/new')}
-            className="paper-card paper-card-hover flex flex-col items-start justify-center gap-2 p-4 text-left"
+            className="paper-card paper-card-hover sm:col-span-2 flex flex-col items-start justify-center gap-2 p-4 text-left bg-gradient-to-br from-caramel-600 to-caramel-800 border-caramel-700"
           >
-            <span className="text-sm font-semibold text-primary">Anything else →</span>
-            <span className="text-xs text-muted-foreground">Describe it your way</span>
+            <span className="text-sm font-semibold text-caramel-50">Anything else →</span>
+            <span className="text-xs text-caramel-200">Describe it your way</span>
           </button>
         </div>
       </section>

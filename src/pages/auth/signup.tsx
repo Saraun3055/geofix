@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+﻿import { useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Wrench, UserRound, Check, Eye, EyeOff } from 'lucide-react'
 import { AuthShell } from './auth-layout'
@@ -31,10 +31,10 @@ function passwordScore(p: string): number {
 
 const PASSWORD_TIERS = [
   { label: 'Too short', color: 'bg-destructive', active: 0 },
-  { label: 'Weak', color: 'bg-rose-400', active: 1 },
-  { label: 'Fair', color: 'bg-amber-400', active: 2 },
-  { label: 'Good', color: 'bg-lime-400', active: 3 },
-  { label: 'Strong', color: 'bg-emerald-500', active: 4 },
+  { label: 'Weak', color: 'bg-rust-600', active: 1 },
+{ label: 'Fair', color: 'bg-caramel-500', active: 2 },
+  { label: 'Good', color: 'bg-caramel-500', active: 3 },
+  { label: 'Strong', color: 'bg-sage-500', active: 4 },
 ] as const
 
 function PasswordMeter({ password }: { password: string }) {

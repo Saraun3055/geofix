@@ -168,7 +168,7 @@ export default function WorkerProfile() {
               )}
             </span>
             <span className="flex items-center gap-2">
-              <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+              <Star className="h-4 w-4 fill-caramel-400 text-caramel-400" />
               {profile?.rating ? profile.rating.toFixed(1) : 'New'} ({profile?.ratingCount ?? 0})
             </span>
             <span className="flex items-center gap-2">

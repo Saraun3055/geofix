@@ -74,7 +74,7 @@ export function WhatsAppHandoff({
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-3">
         <Button
-          className="h-12 gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-base"
+          className="h-12 gap-2 bg-sage-600 hover:bg-sage-700 text-white text-base"
           onClick={() => window.open(url, '_blank', 'noopener,noreferrer')}
         >
           <MessageCircle className="h-5 w-5" />

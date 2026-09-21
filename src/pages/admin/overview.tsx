@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+﻿import { useMemo } from 'react'
 import {
   ResponsiveContainer,
   BarChart,
@@ -23,7 +23,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import { timeAgoShort } from '@/lib/utils'
 
-const CHART_COLORS = ['#b7512e', '#f2a23c', '#9a6a10', '#6d8b3f', '#b3382c', '#40332b', '#7c6b5e', '#c9a26b']
+const CHART_COLORS = ['#7a1b1c', '#8c2425', '#c97772', '#2d2d2d', '#a8504c', '#6a1515', '#e0a09b', '#fdf6f5']
 
 const ACTIVE_STATUSES = ['searching', 'pending_worker_response', 'accepted', 'on_the_way', 'arrived', 'in_progress']
 
@@ -41,12 +41,16 @@ function StatBlock({
   mono?: boolean
 }) {
   return (
-    <div className="rounded-xl border border-border bg-card px-4 py-3.5 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md">
-      <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-        <Icon className="h-3.5 w-3.5" /> {label}
+    <div className="group relative overflow-hidden rounded-xl border border-border bg-gradient-to-b from-card via-card to-stone-50/80 px-4 py-3.5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.7),0_10px_24px_-18px_rgba(44,30,16,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.7),0_14px_30px_-14px_rgba(153,88,42,0.28)]">
+      <span className="pointer-events-none absolute -right-6 -top-8 h-20 w-20 rounded-full bg-caramel-400/10 opacity-60 blur-2xl transition-opacity duration-300 group-hover:opacity-100" />
+      <div className="relative flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-stone-100 to-caramel-100 text-primary shadow-sm ring-1 ring-border/60">
+          <Icon className="h-3.5 w-3.5" />
+        </span>
+        {label}
       </div>
-      <p className={cn('stat-number mt-2 text-3xl font-bold', !mono && 'font-display')}>{value}</p>
-      {sub && <p className="stat-number mt-1 text-xs text-muted-foreground">{sub}</p>}
+      <p className={cn('stat-number relative mt-2 text-3xl font-bold', !mono && 'font-display')}>{value}</p>
+      {sub && <p className="stat-number relative mt-1 text-xs text-muted-foreground">{sub}</p>}
     </div>
   )
 }
@@ -105,10 +109,10 @@ export default function AdminOverview() {
         kind: 'request',
         color:
           r.status === 'accepted' || r.status === 'on_the_way' || r.status === 'arrived' || r.status === 'in_progress'
-            ? '#2f6f4f'
+            ? '#7a1b1c'
             : r.status === 'pending_worker_response'
-              ? '#c9a26b'
-              : '#b7512e',
+              ? '#c97772'
+              : '#8c2425',
       })
     })
     workers?.filter((w) => w.isOnline).forEach((w, i) => {
@@ -119,7 +123,7 @@ export default function AdminOverview() {
         label: w.name.split(' ')[0],
         kind: 'worker',
         category: w.categorySkills[0],
-        color: '#2f6f4f',
+        color: '#8c2425',
       })
       void i
     })
@@ -141,7 +145,7 @@ export default function AdminOverview() {
           </p>
         </div>
         <div className="flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground">
-          <span className={cn('h-2 w-2 rounded-full', stats.data && stats.data.total > 0 ? 'bg-emerald-500' : 'bg-amber-400')} />
+          <span className={cn('h-2 w-2 rounded-full', stats.data && stats.data.total > 0 ? 'bg-sage-500' : 'bg-caramel-500')} />
           {stats.data && stats.data.total > 0 ? `${stats.data.total} active fleets` : 'Idle — no active requests'}
         </div>
       </div>
@@ -162,8 +166,8 @@ export default function AdminOverview() {
             <h2 className="font-display text-base font-semibold">Live map</h2>
           </div>
           <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
-            <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[#b7512e]" /> Request</span>
-            <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[#2f6f4f]" /> Online worker</span>
+            <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[#7a1b1c]" /> Request</span>
+            <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[#8c2425]" /> Online worker</span>
           </div>
         </div>
         <MapView markers={mapMarkers} center={center} zoom={11} height={360} className="rounded-t-none rounded-b-xl border-0" />
@@ -181,17 +185,17 @@ export default function AdminOverview() {
               <AreaChart data={byDay} margin={{ top: 5, right: 10, left: -22, bottom: 0 }}>
                 <defs>
                   <linearGradient id="dayFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#b7512e" stopOpacity={0.25} />
-                    <stop offset="100%" stopColor="#b7512e" stopOpacity={0} />
+                    <stop offset="0%" stopColor="#7a1b1c" stopOpacity={0.28} />
+                    <stop offset="100%" stopColor="#7a1b1c" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5dac8" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0cac7" vertical={false} />
                 <XAxis dataKey="label" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
                 <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} allowDecimals={false} />
                 <Tooltip
-                  contentStyle={{ borderRadius: 12, border: '1px solid #e5dac8', fontFamily: 'JetBrains Mono, monospace' }}
+                  contentStyle={{ borderRadius: 12, border: '1px solid #f0cac7', fontFamily: 'JetBrains Mono, monospace' }}
                 />
-                <Area type="monotone" dataKey="count" stroke="#b7512e" strokeWidth={2} fill="url(#dayFill)" />
+                <Area type="monotone" dataKey="count" stroke="#7a1b1c" strokeWidth={2} fill="url(#dayFill)" />
               </AreaChart>
             </ResponsiveContainer>
           )}
@@ -202,11 +206,11 @@ export default function AdminOverview() {
           <p className="mb-4 mt-0.5 text-xs text-muted-foreground">Share of all requests</p>
           <ResponsiveContainer width="100%" height={260}>
             <BarChart data={byCategory} layout="vertical" margin={{ top: 0, right: 10, left: 4, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5dac8" horizontal={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0cac7" horizontal={false} />
               <XAxis type="number" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} allowDecimals={false} />
               <YAxis type="category" dataKey="name" width={74} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
               <Tooltip
-                contentStyle={{ borderRadius: 12, border: '1px solid #e5dac8', fontFamily: 'JetBrains Mono, monospace' }}
+                contentStyle={{ borderRadius: 12, border: '1px solid #f0cac7', fontFamily: 'JetBrains Mono, monospace' }}
               />
               <Bar dataKey="value" radius={[0, 6, 6, 0]}>
                 {byCategory.map((_, i) => (
@@ -230,7 +234,7 @@ export default function AdminOverview() {
                 ))}
               </Pie>
               <Tooltip
-                contentStyle={{ borderRadius: 12, border: '1px solid #e5dac8', fontFamily: 'JetBrains Mono, monospace' }}
+                contentStyle={{ borderRadius: 12, border: '1px solid #f0cac7', fontFamily: 'JetBrains Mono, monospace' }}
               />
             </PieChart>
           </ResponsiveContainer>
@@ -273,3 +277,4 @@ export default function AdminOverview() {
     </div>
   )
 }
+

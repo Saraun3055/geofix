@@ -28,8 +28,8 @@ const SORTS = [
 
 function TopRatedBadge() {
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 px-2 py-0.5 text-[11px] font-bold text-amber-950 shadow-[0_2px_8px_-2px_rgba(245,158,11,0.6)] animate-badge-bounce">
-      <Star className="h-3 w-3 fill-amber-950 text-amber-950" /> Top Rated
+    <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-caramel-500 to-caramel-700 px-2 py-0.5 text-[11px] font-bold text-caramel-50 shadow-[0_2px_10px_-2px_rgba(185,101,29,0.6)] animate-badge-bounce">
+      <Star className="h-3 w-3 fill-caramel-50 text-caramel-50" /> Top Rated
     </span>
   )
 }
@@ -93,7 +93,7 @@ export default function CustomerWorkers() {
           lat: w.g.geopoint.latitude,
           lng: w.g.geopoint.longitude,
           label: w.name.split(' ')[0],
-          color: w.rating >= 4.8 ? '#d97706' : '#2f6f4f',
+          color: w.rating >= 4.8 ? '#7a1b1c' : '#8c2425',
           kind: 'worker' as const,
           category: w.categorySkills[0],
         })),
@@ -258,7 +258,7 @@ export default function CustomerWorkers() {
               onMouseEnter={() => setActiveWorkerId(worker.userId)}
               className={cn(
                 'paper-card paper-card-hover flex flex-col gap-4 p-4 transition-all duration-200 sm:flex-row sm:items-center sm:justify-between animate-stagger-in cursor-pointer',
-                worker.rating >= 4.8 && 'glow-amber',
+                worker.rating >= 4.8 && 'glow-caramel',
                 activeWorkerId === worker.userId && 'ring-2 ring-primary/60 shadow-lg',
               )}
               style={{ animationDelay: `${i * 55}ms` }}
@@ -266,7 +266,7 @@ export default function CustomerWorkers() {
               <div className="flex items-start gap-4">
                 <span className={cn(
                   'flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-secondary text-secondary-foreground',
-                  worker.rating >= 4.8 && 'ring-2 ring-amber-300/70 animate-pulse-glow',
+                  worker.rating >= 4.8 && 'ring-2 ring-caramel-300/70 animate-pulse-glow',
                 )}>
                   <span className="text-sm font-semibold">{worker.name.split(' ').map((p) => p[0]).join('')}</span>
                 </span>
@@ -275,7 +275,7 @@ export default function CustomerWorkers() {
                     <h3 className="font-display text-base font-semibold">{worker.name}</h3>
                     {worker.rating >= 4.8 && <TopRatedBadge />}
                     {worker.verificationStatus === 'approved' && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-sage-50 px-2 py-0.5 text-[11px] font-medium text-sage-700">
                         <ShieldCheck className="h-3 w-3" /> Verified
                       </span>
                     )}
@@ -292,7 +292,7 @@ export default function CustomerWorkers() {
                         {worker.pincode}
                       </span>
                       {request?.customerPincode === worker.pincode && (
-                        <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700">
+                        <span className="rounded bg-sage-50 px-1.5 py-0.5 text-[10px] font-medium text-sage-700">
                           same pincode
                         </span>
                       )}
@@ -320,8 +320,11 @@ export default function CustomerWorkers() {
                       </span>
                     )}
                     {worker.isOnline && (
-                      <span className="flex items-center gap-1.5 text-xs text-emerald-600">
-                        <span className="h-2 w-2 rounded-full bg-emerald-500" /> Online
+                      <span className="flex items-center gap-1.5 text-xs text-sage-600">
+                        <span className="relative flex h-2 w-2">
+                          <span className="radar-ring radar-ring-sage" />
+                          <span className="relative inline-flex h-2 w-2 rounded-full bg-sage-500" />
+                        </span> Online
                       </span>
                     )}
                   </div>

@@ -94,20 +94,20 @@ export default function WorkerVerification() {
             className={cn(
               'flex items-center gap-4 rounded-xl border p-5',
               phase === 'approved'
-                ? 'border-emerald-200 bg-emerald-50'
+                ? 'border-sage-200 bg-sage-50 shadow-[0_10px_30px_-18px_rgba(122,27,28,0.45)]'
                 : phase === 'rejected'
-                  ? 'border-rose-200 bg-rose-50'
-                  : 'border-amber-200 bg-amber-50',
+                  ? 'border-rust-300 bg-rust-50'
+                  : 'border-caramel-200 bg-caramel-50',
             )}
           >
             {phase === 'approved' ? (
-              <CheckCircle2 className="h-9 w-9 text-emerald-600" />
+              <CheckCircle2 className="h-9 w-9 text-sage-600" />
             ) : phase === 'rejected' ? (
-              <XCircle className="h-9 w-9 text-rose-600" />
+              <XCircle className="h-9 w-9 text-rust-800" />
             ) : phase === 'in-progress' ? (
-              <Loader2 className="h-9 w-9 animate-spin text-amber-600" />
+              <Loader2 className="h-9 w-9 animate-spin text-caramel-700" />
             ) : (
-              <Clock className="h-9 w-9 text-amber-600" />
+              <Clock className="h-9 w-9 text-caramel-700" />
             )}
             <div>
               <p className="font-display text-base font-semibold">
