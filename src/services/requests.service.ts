@@ -225,12 +225,12 @@ export async function rateWorker(
     createdAt: isoNow(),
   }
   store.ratings.unshift(newRating)
-  // Update worker rating
+  // Update worker rating (max is 5 — clamp defensively)
   const worker = store.workers.find((w) => w.userId === workerId)
   if (worker) {
     const totalRating = worker.rating * worker.ratingCount + rating
     worker.ratingCount += 1
-    worker.rating = Math.round((totalRating / worker.ratingCount) * 10) / 10
+    worker.rating = Math.min(5, Math.round((totalRating / worker.ratingCount) * 10) / 10)
   }
   persistDemoStore(store)
   return true

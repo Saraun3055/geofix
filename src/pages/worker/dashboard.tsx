@@ -7,6 +7,8 @@ import {
   TrendingUp,
   Clock,
   ChevronRight,
+  ShieldAlert,
+  ShieldCheck,
 } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkerProfile } from '@/hooks/use-workers'
@@ -85,6 +87,15 @@ export default function WorkerDashboard() {
         </div>
         <AvailabilityToggle online={profile?.isOnline ?? false} onToggle={toggleOnline} />
       </div>
+
+      {/* Verification alert — unverified workers are invisible to customers */}
+      {profile && profile.verificationStatus !== 'approved' && (
+        <VerificationAlert
+          status={profile.verificationStatus}
+          hasDoc={!!profile.govIdUrl}
+          onVerify={() => navigate('/worker/verification')}
+        />
+      )}
 
       {/* Hero stat band */}
       <div className="paper-card relative overflow-hidden p-0">
@@ -183,6 +194,64 @@ export default function WorkerDashboard() {
           <p className="mt-3 text-sm text-muted-foreground">No completed jobs yet.</p>
         )}
       </section>
+    </div>
+  )
+}
+
+function VerificationAlert({
+  status,
+  hasDoc,
+  onVerify,
+}: {
+  status: string
+  hasDoc: boolean
+  onVerify: () => void
+}) {
+  const approved = status === 'approved'
+  const rejected = status === 'rejected'
+  const inProgress = !!hasDoc
+  const pending = !approved && !rejected && !inProgress
+
+  const isRejected = rejected
+  const isInProgress = inProgress && !approved
+
+  const title = isRejected
+    ? 'Verification rejected'
+    : isInProgress
+      ? 'Verification in progress'
+      : 'Verify your ID to start getting jobs'
+  const message = isRejected
+    ? 'Your ID was rejected, so customers can\u2019t see you yet. Upload a clearer copy to get back on the list.'
+    : isInProgress
+      ? 'Your submission is being reviewed. You won\u2019t show up to customers until it\u2019s approved.'
+      : 'Customers only see verified workers. Complete your ID verification to start receiving job requests.'
+  if (approved) return null
+
+  return (
+    <div
+      className={cn(
+        'flex flex-col gap-3 rounded-xl border px-5 py-4 sm:flex-row sm:items-center sm:justify-between',
+        isRejected ? 'border-rose-200 bg-rose-50' : 'border-amber-200 bg-amber-50',
+      )}
+    >
+      <div className="flex items-start gap-3">
+        <span
+          className={cn(
+            'flex h-9 w-9 shrink-0 items-center justify-center rounded-full',
+            isRejected ? 'bg-rose-100 text-rose-600' : 'bg-amber-100 text-amber-600',
+          )}
+        >
+          {isRejected ? <ShieldAlert className="h-5 w-5" /> : <ShieldCheck className="h-5 w-5" />}
+        </span>
+        <div>
+          <p className="font-display text-sm font-semibold">{title}</p>
+          <p className="text-sm text-muted-foreground">{message}</p>
+        </div>
+      </div>
+      <Button size="sm" onClick={onVerify} className="shrink-0 gap-1.5">
+        {pending ? 'Verify now' : 'Go to verification'}
+        <ChevronRight className="h-4 w-4" />
+      </Button>
     </div>
   )
 }

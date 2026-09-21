@@ -21,7 +21,7 @@ const CORS_ORIGIN = process.env.CORS_ORIGIN ?? 'http://localhost:5173'
 
 app.use(helmet())
 app.use(cors({ origin: CORS_ORIGIN, credentials: true }))
-app.use(express.json({ limit: '10mb' }))
+app.use(express.json({ limit: '40mb' }))
 app.use(cookieParser())
 
 // NoSQL-injection defense (applied to every request body, query and params)

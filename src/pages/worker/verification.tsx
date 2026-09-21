@@ -44,9 +44,15 @@ export default function WorkerVerification() {
     rejected: 'Rejected',
   }
 
+  const MAX_FILE_MB = 5
+
   function pickFile(f: File) {
     if (!f.type.startsWith('image/') && f.type !== 'application/pdf') {
       toastError('Unsupported file', 'Upload a photo or PDF of your government ID')
+      return
+    }
+    if (f.size > MAX_FILE_MB * 1024 * 1024) {
+      toastError('File too large', `Keep your ID photo under ${MAX_FILE_MB} MB — take a clearer, smaller photo.`)
       return
     }
     setFile(f)

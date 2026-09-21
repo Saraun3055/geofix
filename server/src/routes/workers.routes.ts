@@ -57,12 +57,19 @@ router.get('/nearby', async (req: AuthRequest, res: Response) => {
   }
 })
 
-/** GET /workers — all workers (optional ?status=approved). Used by admin + pickers. */
+/** GET /workers — admin sees all workers (optional ?status=); other callers only see verified workers. */
 router.get('/', async (req: AuthRequest, res: Response) => {
   try {
+    const isAdmin = req.user!.role === 'admin'
     const status = typeof req.query.status === 'string' ? req.query.status : undefined
     const filter: Record<string, unknown> = {}
-    if (status) filter.verificationStatus = status
+    // Only admins may list unverified workers (verification review). Customers
+    // and workers can only ever be shown approved workers.
+    if (isAdmin) {
+      if (status) filter.verificationStatus = status
+    } else {
+      filter.verificationStatus = 'approved'
+    }
     const profiles = await WorkerProfile.find(filter).sort({ rating: -1 }).lean()
     res.json(profiles.map((p) => toWorkerDoc(p as typeof p & { _id: unknown })))
   } catch {

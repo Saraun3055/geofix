@@ -65,16 +65,15 @@ router.post('/', requireRole('customer'), async (req: AuthRequest, res: Response
     request.updatedAt = new Date()
     await request.save()
 
-    const worker = await WorkerProfile.findOneAndUpdate(
-      { userId: workerId },
-      { $inc: { ratingCount: 1 } },
-      { new: true },
-    ).lean()
+    const worker = await WorkerProfile.findOne({ userId: workerId })
     if (worker) {
-      const prevTotal = (worker.rating ?? 0) * (worker.ratingCount ?? 1)
-      const count = worker.ratingCount
-      const newRating = Math.round(((prevTotal + r) / count) * 10) / 10
-      await WorkerProfile.updateOne({ userId: workerId }, { rating: newRating })
+      // Read the CURRENT count first, then derive the new average and write
+      // both fields together. Using the post-increment doc here double-counts
+      // the old average (e.g. 5.0 over 1 rating + a 3 → 6.5 instead of 4.0).
+      const prevTotal = (worker.rating ?? 0) * (worker.ratingCount ?? 0)
+      const count = worker.ratingCount + 1
+      const newRating = Math.min(5, Math.round(((prevTotal + r) / count) * 10) / 10)
+      await WorkerProfile.updateOne({ userId: workerId }, { rating: newRating, ratingCount: count })
     }
 
     await logAudit({ actorId: req.user!.id, actorRole: req.user!.role, action: 'rate_worker', targetId: workerId })

@@ -152,6 +152,13 @@ router.patch('/:id/assign', requireRole('customer'), async (req: AuthRequest, re
       res.status(409).json({ message: 'This worker declined this request' })
       return
     }
+    // Only verified workers can be assigned — unverified profiles are invisible
+    // to customers, so this is a protection against direct API calls.
+    const targetWorker = await WorkerProfile.findOne({ userId: workerId, verificationStatus: 'approved' })
+    if (!targetWorker) {
+      res.status(409).json({ message: 'This worker is not verified yet and cannot take jobs' })
+      return
+    }
     doc.workerId = workerId
     doc.workerName = workerName ?? null
     doc.status = 'pending_worker_response'

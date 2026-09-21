@@ -10,6 +10,7 @@ export const adminSchema = new Schema(
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     passwordHash: { type: String, required: true },
+    phone: { type: String, default: '' },
     adminRole: { type: String, enum: ['superadmin', 'support'], default: 'support' },
     photoUrl: { type: String, default: '' },
     suspended: { type: Boolean, default: false },
@@ -26,6 +27,7 @@ export interface SafeAdmin {
   id: string
   name: string
   email: string
+  phone?: string
   role: 'admin'
   adminRole: 'superadmin' | 'support'
   photoUrl?: string
@@ -37,6 +39,7 @@ export function toSafeAdmin(a: AdminDoc & { _id: unknown }): SafeAdmin {
     id: (a._id as { toString(): string }).toString(),
     name: a.name,
     email: a.email,
+    phone: a.phone ?? '',
     role: 'admin',
     adminRole: (a.adminRole ?? 'support') as 'superadmin' | 'support',
     photoUrl: a.photoUrl ?? '',

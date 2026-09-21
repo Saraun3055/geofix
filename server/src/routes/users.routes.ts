@@ -1,6 +1,7 @@
 import { Router, type Response } from 'express'
 import { User, toSafeUser } from '../models/User'
 import { Admin, toSafeAdmin } from '../models/Admin'
+import { WorkerProfile } from '../models/WorkerProfile'
 import type { AuthRequest } from '../middleware/types'
 
 const router = Router()
@@ -47,6 +48,7 @@ router.patch('/me', async (req: AuthRequest, res: Response) => {
   }
   const updates: Record<string, unknown> = {}
   if (typeof name === 'string' && name.trim()) updates.name = name.trim()
+  if (typeof phone === 'string') updates.phone = phone.trim()
   if (typeof photoUrl === 'string') updates.photoUrl = photoUrl
   if (typeof pincode === 'string') updates.pincode = pincode.replace(/\D+/g, '').slice(0, 6)
   if (typeof area === 'string') updates.area = area.trim()
@@ -62,11 +64,13 @@ router.patch('/me', async (req: AuthRequest, res: Response) => {
       return
     }
 
-    if (typeof phone === 'string') updates.phone = phone.trim()
     const user = await User.findByIdAndUpdate(req.user!.id, updates, { new: true })
     if (!user) {
       res.status(404).json({ message: 'User not found' })
       return
+    }
+    if (user.role === 'worker') {
+      await WorkerProfile.updateOne({ userId: user._id.toString() }, updates)
     }
     res.json(toSafeUser({ ...user.toObject(), _id: user._id }))
   } catch {

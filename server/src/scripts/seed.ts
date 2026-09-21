@@ -119,6 +119,18 @@ async function seed() {
   await connectDb()
   const reset = process.argv.includes('--reset')
   const force = process.argv.includes('--force')
+  const demo = process.argv.includes('--demo')
+
+  // The admin account is always provisioned (idempotent) so the platform is
+  // never left without a superuser, demo or not.
+  const adminUser = await upsertAdmin('ops@geofix.app', 'admin1234', 'Ops Admin', 'superadmin')
+
+  if (!demo) {
+    console.log('[seed] demo accounts are disabled. Run `npm run seed -- --demo` to reseed sample data.')
+    console.log('[seed] done: admin ok (ops@geofix.app / admin1234)')
+    await disconnectDb()
+    return
+  }
 
   // ── Real-user protection ────────────────────────────────────────────
   // Exactly one demo user was lost to a --reset re-seed, so the seed is now
@@ -160,7 +172,6 @@ async function seed() {
   // Admin accounts belong to their own collection; any legacy admin docs left
   // in the users collection are migrated out so users stay customer/worker only.
   await User.deleteMany({ $or: [{ role: 'admin' }, { email: 'ops@geofix.app' }] })
-  const adminUser = await upsertAdmin('ops@geofix.app', 'admin1234', 'Ops Admin', 'superadmin')
   const customerUser = await upsertUser('customer.demo@geofix.app', 'customer1234', 'Demo Customer', 'customer')
 
   // 10 deterministic workers + dedicated demo worker account.

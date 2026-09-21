@@ -1,4 +1,4 @@
-import { api } from '@/lib/api-client'
+import { api, ApiError } from '@/lib/api-client'
 import { useAuthStore } from '@/stores/auth'
 import type {
   WorkerProfileDoc,
@@ -166,8 +166,14 @@ export async function submitWorkerVerification(userId: string, govIdUrl: string,
   try {
     await api.post<void>(`/workers/${encodeURIComponent(userId)}/verification`, { govIdUrl, name })
     return true
-  } catch {
-    return false
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 413) {
+      throw new Error('Photo too large — keep your ID photo under 5 MB and try again.')
+    }
+    if (e instanceof ApiError) {
+      throw new Error(e.message || 'The upload was rejected — try a clearer, smaller photo.')
+    }
+    throw new Error('Could not reach GeoFix. Check your connection and try again.')
   }
 }
 

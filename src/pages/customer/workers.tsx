@@ -52,8 +52,13 @@ export default function CustomerWorkers() {
 
   const workers = useMemo(() => {
     if (!allWorkers) return null
+    // Only verified workers are shown to customers — unapproved workers can't
+    // be requested until their ID verification is approved by the admin.
     let list = allWorkers.filter(
-      (w) => !excludeIds.has(w.userId) && (!category || w.categorySkills.some((s) => s.toLowerCase() === category)),
+      (w) =>
+        w.verificationStatus === 'approved' &&
+        !excludeIds.has(w.userId) &&
+        (!category || w.categorySkills.some((s) => s.toLowerCase() === category)),
     )
     if (sortBy === 'nearby' && customerLocation) {
       // Nearby shows the workers whose areas are inside the 10 closest
@@ -187,9 +192,9 @@ export default function CustomerWorkers() {
       ) : !workers || workers.length === 0 ? (
         <div className="paper-card flex flex-col items-center gap-3 px-6 py-16 text-center">
           <UserRound className="h-10 w-10 text-muted-foreground/30" />
-          <p className="font-display text-lg font-semibold">No available workers right now</p>
+          <p className="font-display text-lg font-semibold">No verified workers available right now</p>
           <p className="max-w-sm text-sm text-muted-foreground">
-            No matching professionals are registered yet. Check back soon — new workers sign up regularly.
+            Only verified professionals show up here. Check back soon — new workers join after passing ID verification.
           </p>
           <Button onClick={() => window.location.reload()}>Refresh list</Button>
         </div>
